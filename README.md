@@ -79,6 +79,10 @@ defines are included.
   project its author does not change, with the purifier lockfile kept
   beside the packaging; uv.lock stays in the project. Every command takes
   `--lockfile <path>` for the same purpose.
+- `pathSources`, the local packages that uv.lock names by a path outside
+  `src`, such as `pathSources."../shared" = ../shared;`. A flake's source
+  tree cannot reach outside itself. A path inside `src` needs no entry.
+- `testCommand`, the command of `tests`.
 
 `lib.uv-purifier.readLock { src, lockFile ? ... }` reads uv.lock and the
 purifier lockfile into the lock in memory of the purifier contract,
@@ -87,10 +91,6 @@ purifier, such as an SBOM generator, read in one shape. A compiled wheel's
 entry carries the `systems` its platform tags name. `buildUvProject` checks
 it with the purifier library's `checkLock` and takes the downloads of its
 system from `entriesFor`.
-- `pathSources`, the local packages that uv.lock names by a path outside
-  `src`, such as `pathSources."../shared" = ../shared;`. A flake's source
-  tree cannot reach outside itself. A path inside `src` needs no entry.
-- `testCommand`, the command of `tests`.
 
 ## Everyday loop
 
@@ -161,8 +161,7 @@ with no index configured, and then cannot download them offline.
 
 An editor or language server that uses the project's `.venv`, such as
 pyright, Pylance or basedpyright, resolves every import from it after
-`prefetch`, with no network. The checks run pyright on a prefetched
-fixture to keep that so.
+`prefetch`, with no network.
 
 ## Errors and fixes
 
@@ -204,13 +203,58 @@ makes that platform's build fail with uv's error naming the package.
 
 ## Examples
 
-CI locks and builds [Flask](https://github.com/pallets/flask) at commit
-`49943b5` on x86_64 and aarch64, from Flask's own source with the purifier
-lockfile kept outside it, in `tests/real-world/flask`. Flask is a flit-core
-build with compiled wheels such as markupsafe and cryptography, packages
-built from sdists, and dependency groups for tests, typing and docs. Its
-tests pass in the environment that `prefetch` installs offline, and through
-the `tests` output of the builder.
+### Flask
+
+[Flask](https://github.com/pallets/flask) is a uv project with a
+flit-core build, dependencies with compiled wheels, and dependency groups
+for tests, typing and docs. In a checkout of Flask, lock it, then install
+the development environment and run its tests:
+
+```zsh
+git clone https://github.com/pallets/flask
+cd flask
+nix run github:nix-purifiers/uv-purifier -- lock
+nix run github:nix-purifiers/uv-purifier -- prefetch
+uv run --no-sync pytest
+```
+
+A packaging flake can build Flask without changing its repository. It
+keeps `uv-purifier.lock.json` beside the flake and passes it as
+`lockFile`:
+
+```nix
+{
+  inputs.uv-purifier.url = "github:nix-purifiers/uv-purifier";
+  inputs.nixpkgs.follows = "uv-purifier/nixpkgs";
+  inputs.flask = {
+    url = "github:pallets/flask";
+    flake = false;
+  };
+
+  outputs = { nixpkgs, uv-purifier, flask, ... }:
+    let
+      system = "x86_64-linux";
+      pkgs = nixpkgs.legacyPackages.${system};
+      project = uv-purifier.lib.uv-purifier.buildUvProject {
+        inherit pkgs;
+        src = flask;
+        lockFile = ./uv-purifier.lock.json;
+      };
+    in
+    {
+      # Flask and its dependencies, with the `flask` command in bin/.
+      packages.${system}.default = project.packages.flask;
+      checks.${system}.tests = project.tests;
+    };
+}
+```
+
+To make that lockfile, run `lock` in a checkout of the same Flask commit
+with the path of the packaging flake:
+
+```zsh
+nix run github:nix-purifiers/uv-purifier -- lock --lockfile ../flask-packaging/uv-purifier.lock.json
+```
 
 ## Credits
 
