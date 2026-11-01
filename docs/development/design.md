@@ -56,13 +56,25 @@ reports the NAR hash that nixpkgs' `fetchgit` checks.
 - `builds`: for each package that may be built, `"<name>==<version>"`, the
   index of its set.
 - `sources`: for each package from git, the `path` of its git entry.
-- `outputs`: for each workspace member with a build, the file names of its
-  sdist and wheel and the scripts its wheel installs. The lock run builds
-  each member once with `uv build`, in a scratch copy of the project, and
-  reads the scripts from the wheel's `entry_points.txt`. The Nix library
-  exposes them as `release.artifacts` and
+- `outputs`: for a workspace member whose build makes something other
+  than what Nix derives, the fields that differ. Nix derives the sdist and
+  a pure wheel from the normalized name and the version in uv.lock, and the
+  scripts from [project.scripts] and [project.gui-scripts]. The lock run
+  builds each member once with `uv build`, in a scratch copy of the
+  project, reads the scripts from the wheel's `entry_points.txt`, and
+  records a field only when the build makes it otherwise, such as with a
+  dynamic version, a compiled wheel or scripts from a setup.py. The Nix
+  library exposes the outputs as `release.artifacts` and
   `packages.<member>.scripts`, and each build fails when it makes
   something else.
+
+The lockfile repeats nothing uv.lock records. A file of a build
+requirement that uv.lock also lists is named in its set of build
+requirements but has no entry in `artifacts`; Nix takes its URL and hash
+from uv.lock. The build requirements resolve with every version uv.lock
+pins as a constraint, so a package that a build and the project both use
+has one version; a set that cannot have those versions resolves without
+them, and the lock run says so.
 - `inputsHash`: a hash over uv.lock and the pyproject.toml of every source
   tree in the project. The Nix library computes the same hash and refuses
   the lockfile when they differ.
