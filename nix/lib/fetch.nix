@@ -8,25 +8,32 @@
 # nixpkgs' fetchurl produce the same paths.
 #
 # `fetchurl`, when given, replaces the built-in fetcher. It is called with
-# { name, url, hash } and is the place for credentials (nixpkgs' fetchurl
-# takes `netrcPhase`) or mirrors.
+# { name, urls, hash } and is the place for credentials (nixpkgs' fetchurl
+# takes `netrcPhase`) or further mirrors.
 {
   fetchurl ? null,
 }:
-# `hash` is the SRI hash of the file.
+# A file entry of the shared purifier library: `url`, the `mirrors` that
+# serve the same bytes, and the SRI `hash` of the file. Nix's built-in
+# fetcher downloads from `url` alone; the mirrors are tried by a `fetchurl`
+# passed in. The entries uv-purifier writes have no mirrors, because an
+# index such as PyPI keeps a file at its URL.
 {
   name,
   url,
+  mirrors ? [ ],
   hash,
 }:
+let
+  urls = [ url ] ++ mirrors;
+in
 if fetchurl != null then
-  fetchurl { inherit name url hash; }
+  fetchurl { inherit name urls hash; }
 else
   derivation {
-    inherit name url;
+    inherit name url urls;
     builder = "builtin:fetchurl";
     system = "builtin";
-    urls = [ url ];
     outputHash = hash;
     outputHashAlgo = "sha256";
     outputHashMode = "flat";

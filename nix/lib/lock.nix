@@ -195,6 +195,7 @@ let
       value = {
         path = fileName entry.url;
         inherit (entry) url;
+        mirrors = [ ];
         hash = sriHash entry.hash;
       };
     }) (package.wheels or [ ] ++ (if package ? sdist then [ package.sdist ] else [ ]))

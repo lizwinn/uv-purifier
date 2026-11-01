@@ -3,59 +3,89 @@
 ## Two lockfiles
 
 uv.lock pins every package the project installs, including development
-groups and optional dependencies, for every platform: each package has its
-wheels and its sdist, with URLs and SHA-256 hashes. The Nix library reads
-uv.lock with `builtins.fromTOML` (`nix/lib/lock.nix`).
+groups and optional dependencies, for every platform. A package from an
+index has its wheels and its sdist, with URLs and SHA-256 hashes. A package
+from git has its commit, one from a URL has the URL and the hash of the
+file, and one from a local path has the path and, for a file, its hash. The
+Nix library reads uv.lock with `builtins.fromTOML` (`nix/lib/lock.nix`).
 
-uv.lock does not pin build requirements. A workspace member's
-`[build-system].requires` is resolved by uv's build isolation at build time,
-and so are the build requirements of a dependency that installs from its
-sdist. `uv-purifier lock` (`src/uv_purifier.py`) fills that gap:
+uv.lock does not pin build requirements, which uv's build isolation
+resolves at build time. `uv-purifier lock` (`src/uv_purifier.py`) fills that
+gap. It visits every package the build may have to build:
 
-1. It collects the build requirements of every workspace member with a
-   build, from the member's pyproject.toml.
-2. It downloads the sdist of every dependency that has no wheel tagged
-   `none-any` and reads the build requirements from the pyproject.toml in
-   the sdist. A package without that table gets uv's default,
-   `setuptools>=40.8.0`. Such a dependency may have to be built on some
-   system, and the Nix build decides which systems.
-3. It resolves each distinct set of build requirements by running
-   `uv lock` on a throwaway virtual project that depends on them. The
-   throwaway project copies the index settings of the root pyproject.toml.
-   The result covers every platform, like uv.lock does.
-4. It repeats step 2 for the packages of each resolved set, because a build
-   requirement can itself have only an sdist.
+- every workspace member with a build;
+- every package from git, a URL or a local path that is not a wheel;
+- every package from an index that has no wheel tagged `none-any`, which
+  some system may have to build from its sdist (the Nix build decides
+  which systems);
+- the build requirements themselves, by the last rule, until nothing new
+  turns up.
+
+For each, it takes the source tree (a scratch copy of a local tree or of a
+git checkout, or an unpacked archive) and:
+
+1. reads the static requirements of `[build-system].requires`, or uv's
+   default `setuptools>=40.8.0`;
+2. installs them into a throwaway virtual environment and calls the
+   backend's `get_requires_for_build_sdist`, `get_requires_for_build_wheel`
+   and `get_requires_for_build_editable` hooks (PEP 517 and PEP 660) in the
+   tree, which report the requirements the backend adds, such as
+   hatchling's `editables`;
+3. resolves the union by running `uv lock` on a throwaway virtual project
+   that depends on it. The throwaway project copies the index settings of
+   the root pyproject.toml, and the result covers every platform, like
+   uv.lock does.
+
+Git checkouts are fetched with `nix-prefetch-git --fetch-submodules`, which
+reports the NAR hash that nixpkgs' `fetchgit` checks.
 
 `uv-purifier.lock.json` records:
 
-- `artifacts`: every file of the resolved build requirements, as download
-  entries of the shared purifier library: `path` (the file name), `url`
-  and an SRI `hash`.
+- `artifacts`: the download entries of the shared purifier library. A file
+  entry `{ path, url, mirrors, hash }` is a file of a build requirement,
+  with its file name as `path`, an empty `mirrors` list and an SRI `hash`.
+  A git entry `{ path, git = { url, rev, submodules }, hash }` is a
+  checkout, with `submodules = true` because uv checks out submodules.
 - `buildRequirements`: each distinct set, with its resolved packages and
   the file names of their wheels and sdist. A set that did not resolve has
   `error` instead, and the Nix build reports it only if it has to build
   that package.
 - `builds`: for each package that may be built, `"<name>==<version>"`, the
   index of its set.
-- `inputsHash`: a hash over uv.lock and every member's pyproject.toml. The
-  Nix library computes the same hash and refuses the lockfile when they
-  differ.
+- `sources`: for each package from git, the `path` of its git entry.
+- `inputsHash`: a hash over uv.lock and the pyproject.toml of every source
+  tree in the project. The Nix library computes the same hash and refuses
+  the lockfile when they differ.
 
 ## Choosing the files for a system
 
 `nix/lib/wheels.nix` decides from a wheel's file name whether it installs
 with the build's Python on the build's system (PEP 425 tags, manylinux
 1, 2010, 2014 and `2_N` against the glibc of the package set, `abi3`). For
-each package, `nix/lib/build-uv-project.nix` takes its wheels that install,
-or else its sdist and the build of it. A build adds the files of its set of
-build requirements, chosen the same way, and the builds those need in turn.
-Every chosen file is fetched as a fixed-output derivation and linked into
-one flat directory, the wheelhouse.
+each package from an index, `nix/lib/build-uv-project.nix` takes its wheels
+that install, or else its sdist and the build of it. A build adds the files
+of its set of build requirements, chosen the same way, and the builds those
+need in turn. Every chosen file is fetched as a fixed-output derivation and
+linked into one flat directory, the wheelhouse.
 
 uv makes the final choice among the fetched wheels when it installs. When a
 wheel that `wheels.nix` accepts is one uv rejects, uv tries to build the
 sdist, which is missing from the wheelhouse, and the build fails with uv's
 error.
+
+## Packages from git, URLs and local paths
+
+Each of these gets a wheel of its own (`directWheels`). A wheel file is
+used as it is. Any other source is built with `uv build --wheel` from the
+git checkout (and its `subdirectory`), the unpacked archive, or the local
+directory. `SETUPTOOLS_SCM_PRETEND_VERSION` holds the version uv.lock
+records, because a checkout from `fetchgit` has no repository for
+setuptools-scm or hatch-vcs to read.
+
+A local path inside `src` is read from `src`. A path outside it, such as
+`../shared`, comes from the `pathSources` argument, because a flake's
+source tree cannot reach outside itself. The `uv-purifier` command maps
+such paths to their absolute locations itself (`nix/lib/cli.nix`).
 
 ## Installing in the sandbox
 
@@ -66,15 +96,27 @@ wheelhouse, and with the Python of the package set (`UV_PYTHON`,
 - A member's package is `uv build --package <member>`, which builds its
   sdist and then its wheel from the sdist, in an isolated environment that
   takes the build backend from the wheelhouse.
-- A member's environment is `uv export --frozen --no-dev --package <member>
-  --no-emit-workspace`, a requirements file with every hash from uv.lock,
-  installed with `uv pip install --require-hashes` into a new virtual
-  environment, followed by the wheels of the member and of the members it
-  depends on.
+- A member's environment starts from `uv export --frozen --no-dev
+  --package <member> --no-emit-workspace`. `nix/lib/split_requirements.py`
+  takes out every requirement that does not come from an index (uv export
+  writes those as `name @ <url>` or as a path) and replaces it with the
+  wheel Nix built. The rest is installed with
+  `uv pip install --require-hashes` into a new virtual environment,
+  followed by the replaced wheels and the wheels of the member and of the
+  members it depends on.
 
 `uv sync` cannot do this step. With no network, uv installs a registry
 package of uv.lock only from the URL in uv.lock or from its cache, and
 ignores `--find-links`. The cache's layout is internal to uv.
+
+## Developing offline
+
+`uv-purifier sync` builds the `interactive` output of `buildUvProject`
+(the Python, the wheelhouse, and the wheels from git, URLs and local paths
+with their index for `split_requirements.py`) and installs the project's
+`.venv` from it the same way, with the default dependency groups, using
+`uv pip sync` so packages that left the lock are removed. The workspace
+members and editable path dependencies are installed editable last.
 
 ## The interpreter
 

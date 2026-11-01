@@ -5,21 +5,25 @@
     {
       "path": "flit_core-3.12.0-py3-none-any.whl",
       "url": "https://files.pythonhosted.org/packages/f2/65/b6ba90634c984a4fcc02c7e3afe523fef500c4980fec67cc27536ee50acf/flit_core-3.12.0-py3-none-any.whl",
+      "mirrors": [],
       "hash": "sha256-56AwQGnqiVFy48e7cDKS6ZLF0VVd0SM6t7ViG1tp5iw="
     },
     {
       "path": "flit_core-3.12.0.tar.gz",
       "url": "https://files.pythonhosted.org/packages/69/59/b6fc2188dfc7ea4f936cd12b49d707f66a1cb7a1d2c16172963534db741b/flit_core-3.12.0.tar.gz",
+      "mirrors": [],
       "hash": "sha256-GPYxANb5Q4XG7VenIHNEPhpxpKy0M5SRYV0PFtb/AbI="
     },
     {
       "path": "setuptools-84.2.1-py3-none-any.whl",
       "url": "https://files.pythonhosted.org/packages/ef/55/6dc6d6bb953bdfc52519a0059592c52b6e3b8ad51cf8256dffceb55b0610/setuptools-84.2.1-py3-none-any.whl",
+      "mirrors": [],
       "hash": "sha256-yhQLRdUyWpR4+IDjUUhPYv7xXzNkYuRJygwDyHPVicI="
     },
     {
       "path": "setuptools-84.2.1.tar.gz",
       "url": "https://files.pythonhosted.org/packages/70/b3/c19426f783614d625699a4b247faf628ea9ab1db228674491767b417f9e1/setuptools-84.2.1.tar.gz",
+      "mirrors": [],
       "hash": "sha256-P/iztUkqCqZpYPRBk2Woa4TgEwcNQxPk1KaJT11k1rw="
     }
   ],

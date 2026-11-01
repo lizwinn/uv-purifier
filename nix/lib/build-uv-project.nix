@@ -142,7 +142,7 @@ let
         inherit name;
         path = fetch {
           name = lock.storeName name;
-          inherit (file) url hash;
+          inherit (file) url mirrors hash;
         };
       }
     ) fileNames

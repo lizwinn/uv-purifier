@@ -81,7 +81,9 @@ let
     '';
 in
 {
-  simple = runs "simple" simple.environments.simple "simple" "simple attrs=25.3.0 docopt=0.6.2";
+  simple =
+    runs "simple" simple.environments.simple "simple"
+      "simple attrs=25.3.0 docopt=0.6.2 markupsafe=3.0.3 &lt;nix&gt;";
 
   # The environment of the virtual root has app, its scripts and every
   # member app depends on.

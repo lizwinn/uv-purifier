@@ -3,8 +3,9 @@ name = "simple"
 version = "0.1.0"
 requires-python = ">=3.12"
 # attrs installs from a wheel. docopt has only an sdist, so the build
-# installs it by building it with the locked setuptools.
-dependencies = ["attrs==25.3.0", "docopt==0.6.2"]
+# installs it by building it with the locked setuptools. markupsafe has a
+# compiled wheel per platform, and each system installs its own.
+dependencies = ["attrs==25.3.0", "docopt==0.6.2", "markupsafe==3.0.3"]
 
 [project.scripts]
 simple = "simple:main"

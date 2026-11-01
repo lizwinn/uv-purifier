@@ -411,7 +411,7 @@ def lock(root):
     def add_artifact(entry):
         name = file_name(entry["url"])
         known = artifacts.get(name)
-        record = {"path": name, "url": entry["url"], "hash": sri(entry["hash"])}
+        record = {"path": name, "url": entry["url"], "mirrors": [], "hash": sri(entry["hash"])}
         if known is not None and known != record:
             raise Error(f"two locked files are both named {name}: {known['url']} and {entry['url']}")
         artifacts[name] = record

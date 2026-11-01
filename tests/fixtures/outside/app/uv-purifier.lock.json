@@ -5,81 +5,97 @@
     {
       "path": "editables-0.6-py3-none-any.whl",
       "url": "https://files.pythonhosted.org/packages/cc/0e/d095533037fc9468f947b19f2da53f869804632b508808de41e86e801797/editables-0.6-py3-none-any.whl",
+      "mirrors": [],
       "hash": "sha256-1w5GmAeKHQM+d4bZxk5b4HDQWKZ8IUFwJNOKWKwgqkM="
     },
     {
       "path": "editables-0.6.tar.gz",
       "url": "https://files.pythonhosted.org/packages/82/f8/02a4e9a0cb961b0feeb431ac96b231c157ecdcbbeacafe9e2fdb4b1dde39/editables-0.6.tar.gz",
+      "mirrors": [],
       "hash": "sha256-EWODSQI4HEYTeHlRxZFIAP3xVa4IhIo3O46lAGeAl3w="
     },
     {
       "path": "hatchling-1.33.0-py3-none-any.whl",
       "url": "https://files.pythonhosted.org/packages/32/64/4afe5dd77b2939a93e8c9513f8082dbd049ecba9c1484a379a0f6ae29d6b/hatchling-1.33.0-py3-none-any.whl",
+      "mirrors": [],
       "hash": "sha256-QVKQuE9GTSiEMD/KiXTTjnuFV5Bp+rAqFdsIKPuxRG0="
     },
     {
       "path": "hatchling-1.33.0.tar.gz",
       "url": "https://files.pythonhosted.org/packages/7a/f1/e47b937226ae3b093bbd0132eb0b7ee5bfad12c2b5324afd10ae49946b05/hatchling-1.33.0.tar.gz",
+      "mirrors": [],
       "hash": "sha256-TEIr1NVU/P9d5bc+lZb4XkHp+X9+VT2PdZXssxpie+8="
     },
     {
       "path": "packaging-26.3-py3-none-any.whl",
       "url": "https://files.pythonhosted.org/packages/63/34/ba1c580383c9eada3711951fef0795c80b829a078d72188184bcab9dd527/packaging-26.3-py3-none-any.whl",
+      "mirrors": [],
       "hash": "sha256-1xk/fI5Ok/RE/eAmK/kK8w4W+grQrUTLVTyHM5sjzRw="
     },
     {
       "path": "packaging-26.3.tar.gz",
       "url": "https://files.pythonhosted.org/packages/7d/fa/3944b40b07da9ce895c0e6303a5ab7d53da063554f534556b134a54d6093/packaging-26.3.tar.gz",
+      "mirrors": [],
       "hash": "sha256-lO3CVkJK84di6zEwbu0ovrnw78UKiDdJLJ1v1gBK7Xk="
     },
     {
       "path": "pathspec-1.1.1-py3-none-any.whl",
       "url": "https://files.pythonhosted.org/packages/f1/d9/7fb5aa316bc299258e68c73ba3bddbc499654a07f151cba08f6153988714/pathspec-1.1.1-py3-none-any.whl",
+      "mirrors": [],
       "hash": "sha256-oAzmQvV3v39HOTIxgFYhK8T4v99TEox4u9WvC5sgsYk="
     },
     {
       "path": "pathspec-1.1.1.tar.gz",
       "url": "https://files.pythonhosted.org/packages/5a/82/42f767fc1c1143d6fd36efb827202a2d997a375e160a71eb2888a925aac1/pathspec-1.1.1.tar.gz",
+      "mirrors": [],
       "hash": "sha256-F9tezVJBBKEg4XOBTJA2epapjQfEWy4QwvORn/+Rv1o="
     },
     {
       "path": "pluggy-1.7.0-py3-none-any.whl",
       "url": "https://files.pythonhosted.org/packages/40/9e/2b38731e0fc536806f16490e1a12d7f0dc2a1235aa8cc07bcc75416a7daa/pluggy-1.7.0-py3-none-any.whl",
+      "mirrors": [],
       "hash": "sha256-fdew2IMro8tjLDBpJt7RI0KSEbg2QbNdxcQa0tNPm+w="
     },
     {
       "path": "pluggy-1.7.0.tar.gz",
       "url": "https://files.pythonhosted.org/packages/bf/db/7fc19e6f2dc92a966727031389fc2e08b558f0f25eb7403c1119ad4713cd/pluggy-1.7.0.tar.gz",
+      "mirrors": [],
       "hash": "sha256-0eqkbrtZWJG4YKsIa00JyFiK9l69Q2G46PS7iSC5C6g="
     },
     {
       "path": "setuptools-84.2.1-py3-none-any.whl",
       "url": "https://files.pythonhosted.org/packages/ef/55/6dc6d6bb953bdfc52519a0059592c52b6e3b8ad51cf8256dffceb55b0610/setuptools-84.2.1-py3-none-any.whl",
+      "mirrors": [],
       "hash": "sha256-yhQLRdUyWpR4+IDjUUhPYv7xXzNkYuRJygwDyHPVicI="
     },
     {
       "path": "setuptools-84.2.1.tar.gz",
       "url": "https://files.pythonhosted.org/packages/70/b3/c19426f783614d625699a4b247faf628ea9ab1db228674491767b417f9e1/setuptools-84.2.1.tar.gz",
+      "mirrors": [],
       "hash": "sha256-P/iztUkqCqZpYPRBk2Woa4TgEwcNQxPk1KaJT11k1rw="
     },
     {
       "path": "tomlkit-0.15.2-py3-none-any.whl",
       "url": "https://files.pythonhosted.org/packages/da/46/7d84138a60a8bd796825b2d38ebe92d0d16501ca57d501b7c5d677401bbc/tomlkit-0.15.2-py3-none-any.whl",
+      "mirrors": [],
       "hash": "sha256-BVYkEhY6MDe5RJc4X7f5IExje8YFr3pIGZ5BzyJy9Dc="
     },
     {
       "path": "tomlkit-0.15.2.tar.gz",
       "url": "https://files.pythonhosted.org/packages/08/72/fc01563df95c189a9f65850096bdc205bc2fe37da6c740cd64afaf18d07e/tomlkit-0.15.2.tar.gz",
+      "mirrors": [],
       "hash": "sha256-g+MnVbodINk0C9Bp7pfp9iMrojRrY//LpCXeAffjJ6Y="
     },
     {
       "path": "trove_classifiers-2026.9.21.13-py3-none-any.whl",
       "url": "https://files.pythonhosted.org/packages/30/81/0da8afb52a71d0a4f2bd3152357b1a441e393b286374802b9d3addab4ab5/trove_classifiers-2026.9.21.13-py3-none-any.whl",
+      "mirrors": [],
       "hash": "sha256-ix/0+cGRsQQLccN/HkRauZcykR482R3lKDhFOoVNehc="
     },
     {
       "path": "trove_classifiers-2026.9.21.13.tar.gz",
       "url": "https://files.pythonhosted.org/packages/bf/93/af436dfaa845cab5d96f0adbc1e4f3730532d37fa249e4eb796fb1d7fc82/trove_classifiers-2026.9.21.13.tar.gz",
+      "mirrors": [],
       "hash": "sha256-Cp68jU4vPooihIxSWAMwNb7BejASrD/qFtuqdkSJ63E="
     }
   ],
