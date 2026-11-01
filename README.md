@@ -24,18 +24,28 @@ Commit both lockfiles, uv.lock and `uv-purifier.lock.json`, to the
 project's repository. We recommend this setup, and the builder and the
 commands look for both lockfiles there by default.
 
-The flake provides an overlay, `overlays.default`,
-that adds one attribute to the package set: the scope `uv-purifier`. The
-scope holds the builder `buildUvProject` and the `uv-purifier` command. A
-package written for `callPackage` takes the scope by name:
+Then build the project from the same directory. The command adds no Nix
+file to the project, and it builds the workspace member `app`:
 
-```nix
-# package.nix
-{ uv-purifier }:
-(uv-purifier.buildUvProject { src = ./.; }).packages.app
+```zsh
+nix build --impure --expr '
+  let
+    purifier = builtins.getFlake "github:nix-purifiers/uv-purifier";
+    pkgs = import purifier.inputs.nixpkgs {
+      system = builtins.currentSystem;
+      overlays = [ purifier.overlays.default ];
+    };
+  in
+  (pkgs.uv-purifier.buildUvProject { src = ./.; }).packages.app'
 ```
 
-A flake that builds the project applies the overlay and calls the package:
+`overlays.default` adds one attribute to the package set: the scope
+`uv-purifier`. The scope holds the builder `buildUvProject` and the
+`uv-purifier` command.
+
+A project whose authors want a flake that packages it can add one. The
+flake can live in the project's repository or in another one, and it calls
+the builder directly:
 
 ```nix
 {
@@ -54,7 +64,7 @@ A flake that builds the project applies the overlay and calls the package:
     {
       # A virtual environment with the member `app`, its dependencies and
       # its scripts in bin/.
-      packages.${system}.default = pkgs.callPackage ./package.nix { };
+      packages.${system}.default = project.packages.app;
       checks.${system}.tests = project.tests;
     };
 }
@@ -258,13 +268,24 @@ nix run github:nix-purifiers/uv-purifier -- prefetch
 uv run --no-sync pytest
 ```
 
-Commit `uv-purifier.lock.json` beside uv.lock in the Flask repository. A
-flake in the repository, like the one in the Quickstart, then builds
-Flask with `(pkgs.uv-purifier.buildUvProject { src = ./.; }).packages.flask`.
+Then build Flask from the same directory, with the command of the
+Quickstart and `packages.flask` in place of `packages.app`:
 
-A packaging flake outside the repository can also build Flask, without
-changing its repository. It keeps `uv-purifier.lock.json` beside the
-flake and passes it as `lockFile`:
+```zsh
+nix build --impure --expr '
+  let
+    purifier = builtins.getFlake "github:nix-purifiers/uv-purifier";
+    pkgs = import purifier.inputs.nixpkgs {
+      system = builtins.currentSystem;
+      overlays = [ purifier.overlays.default ];
+    };
+  in
+  (pkgs.uv-purifier.buildUvProject { src = ./.; }).packages.flask'
+```
+
+A packaging flake outside the Flask repository can also build Flask,
+without changing that repository. It keeps `uv-purifier.lock.json` beside
+the flake and passes it as `lockFile`:
 
 ```nix
 {
