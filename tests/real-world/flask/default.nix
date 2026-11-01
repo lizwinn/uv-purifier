@@ -28,7 +28,7 @@ let
   };
 
   project = buildUvProject {
-    inherit pkgs src;
+    inherit src;
     lockFile = ./uv-purifier.lock.json;
     testCommand = [
       "pytest"

@@ -66,14 +66,13 @@ let
     if lib.pathIsDirectory target then source target else target
   );
 
-  buildUvProject = import ./build-uv-project.nix {
+  buildUvProject = pkgs.callPackage ./build-uv-project.nix {
     purifier = import purifier { inherit lib; };
-    inherit lib;
   };
   projectSrc = source root;
   project = buildUvProject (
     {
-      inherit pkgs pathSources;
+      inherit pathSources;
       src = projectSrc;
     }
     // lib.optionalAttrs (lockFile != null) { lockFile = /. + lockFile; }

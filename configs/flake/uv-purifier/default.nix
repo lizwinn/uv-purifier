@@ -67,6 +67,7 @@
               inherit pkgs;
               inherit (self.packages.${system}) cli;
               lib' = self.lib;
+              overlay = self.overlays.default;
             };
             treefmt.programs.nixfmt.enable = true;
           };

@@ -1,8 +1,8 @@
 # uv-purifier
 
 uv-purifier lets Nix build a [uv](https://docs.astral.sh/uv/) project in its
-sandbox, offline, from the project's lockfiles. You do not commit generated
-Nix files to the project.
+sandbox, offline, from the project's lockfiles. The project keeps its two
+lockfiles and its own build files.
 
 uv.lock already pins every dependency of the project with its URL and hash,
 and the Nix library reads it directly. What uv.lock leaves out are the build
@@ -20,8 +20,17 @@ From the directory that holds uv.lock:
 nix run github:nix-purifiers/uv-purifier -- lock
 ```
 
-Commit `uv-purifier.lock.json`. Then build the project from a flake with
-the builder in the flake's library:
+Commit `uv-purifier.lock.json`. The flake's overlay, `overlays.default`,
+adds the builder `buildUvProject` to the package set, beside the builders
+of nixpkgs. A package written for `callPackage` takes it by name:
+
+```nix
+# package.nix
+{ buildUvProject }:
+(buildUvProject { src = ./.; }).packages.app
+```
+
+A flake that builds the project applies the overlay and calls the package:
 
 ```nix
 {
@@ -31,22 +40,25 @@ the builder in the flake's library:
   outputs = { nixpkgs, uv-purifier, ... }:
     let
       system = "x86_64-linux";
-      pkgs = nixpkgs.legacyPackages.${system};
-      project = uv-purifier.lib.uv-purifier.buildUvProject {
-        inherit pkgs;
-        src = ./.;
+      pkgs = import nixpkgs {
+        inherit system;
+        overlays = [ uv-purifier.overlays.default ];
       };
+      project = pkgs.buildUvProject { src = ./.; };
     in
     {
       # A virtual environment with the member `app`, its dependencies and
       # its scripts in bin/.
-      packages.${system}.default = project.packages.app;
+      packages.${system}.default = pkgs.callPackage ./package.nix { };
       checks.${system}.tests = project.tests;
     };
 }
 ```
 
-`buildUvProject { pkgs, src, ... }` returns:
+`buildUvProject.override` replaces a package the builder takes from the
+package set, such as `uv` or `python3`.
+
+`buildUvProject { src, ... }` returns:
 
 - `packages.<member>`: for each workspace member, a virtual environment
   with the member and its runtime dependencies, and its scripts in `bin/`.
@@ -72,7 +84,7 @@ defines are included.
 
 - `fetchers`, which goes to the purifier library's `fetchEntry` and `tree`,
   such as `fetchers.fetchurl` for a company mirror or credentials.
-- `python` (default `pkgs.python3`), which must satisfy the project's
+- `python` (default `python3` of the package set), which must satisfy the project's
   `requires-python`.
 - `lockFile` (default `src + "/uv-purifier.lock.json"`). A file given
   outside `src` replaces any copy in it, so a packaging flake can build a
@@ -92,7 +104,7 @@ entry carries the `systems` its platform tags name. `buildUvProject` checks
 it with the purifier library's `checkLock` and takes the downloads of its
 system from `entriesFor`.
 
-## Everyday loop
+## Development loop
 
 ```zsh
 nix run github:nix-purifiers/uv-purifier -- prefetch
@@ -144,7 +156,7 @@ variable to the path it passes as `lockFile`.
 uploads the `release` that Nix built, with `uv publish`; arguments after
 `--` go to `uv publish`, and `--package <member>` limits it to members.
 
-## Offline work
+## Working offline
 
 After `prefetch`, `uv run --no-sync`, the tests and the editor work with
 the network cut off. `uv run` without `--no-sync` and `uv sync` do not:
@@ -163,7 +175,7 @@ An editor or language server that uses the project's `.venv`, such as
 pyright, Pylance or basedpyright, resolves every import from it after
 `prefetch`, with no network.
 
-## Errors and fixes
+## Troubleshooting
 
 | What happened | The error says | Fix |
 | --- | --- | --- |
@@ -179,9 +191,11 @@ pyright, Pylance or basedpyright, resolves every import from it after
 `prefetch` and `publish` check the lockfile before they start Nix, so their
 errors name the project's own files.
 
-## Sources supported and refused
+## Supported language repositories
 
-Every source kind uv.lock records builds:
+uv.lock records where each package comes from, and uv-purifier builds
+packages from each of those sources. The list below says how each kind of
+package builds.
 
 - Packages from an index install from the wheel for the system and Python
   of the build, or else build from their sdist.
@@ -234,9 +248,11 @@ keeps `uv-purifier.lock.json` beside the flake and passes it as
   outputs = { nixpkgs, uv-purifier, flask, ... }:
     let
       system = "x86_64-linux";
-      pkgs = nixpkgs.legacyPackages.${system};
-      project = uv-purifier.lib.uv-purifier.buildUvProject {
-        inherit pkgs;
+      pkgs = import nixpkgs {
+        inherit system;
+        overlays = [ uv-purifier.overlays.default ];
+      };
+      project = pkgs.buildUvProject {
         src = flask;
         lockFile = ./uv-purifier.lock.json;
       };

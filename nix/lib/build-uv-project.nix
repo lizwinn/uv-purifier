@@ -1,8 +1,17 @@
 # SPDX-License-Identifier: MIT
 #
-# `lib.uv-purifier.buildUvProject`: builds a uv project in the Nix sandbox
-# from its two lockfiles, as the purifier contract
-# (github:nix-purifiers/purifier, CONTRACT.md) describes.
+# `buildUvProject`: builds a uv project in the Nix sandbox from its two
+# lockfiles, as the purifier contract (github:nix-purifiers/purifier,
+# CONTRACT.md) describes.
+#
+# The file is a package for callPackage. The first argument set holds what
+# it takes from the package set, and the result is the builder. The
+# uv-purifier overlay (`overlays.default`) adds it to the package set as
+# `buildUvProject`, so a package written for callPackage takes it by name:
+#
+#   { buildUvProject }: (buildUvProject { src = ./.; }).packages.app
+#
+# `buildUvProject.override` replaces what it takes from the package set.
 #
 # uv.lock pins the project's dependencies, and uv-purifier.lock.json pins
 # the build requirements of the workspace members and of the dependencies
@@ -26,14 +35,24 @@
 # - `interactive`: what `uv-purifier prefetch` installs the project's .venv
 #   from.
 {
+  lib,
+  stdenvNoCC,
+  linkFarm,
+  runCommand,
+  writeText,
+  unzip,
+  zstd,
+  uv,
+  glibc,
+  python3,
+  fetchurl,
+  fetchgit,
   # The shared library of the nix-purifiers (github:nix-purifiers/purifier),
   # which checks the lock, fetches download entries and holds the wheel
-  # helpers.
+  # helpers. The overlay passes the library that uv-purifier is pinned to.
   purifier,
-  lib,
 }:
 {
-  pkgs,
   # The project root, which holds uv.lock, the root pyproject.toml and, unless
   # `lockFile` names another path, uv-purifier.lock.json.
   src,
@@ -42,7 +61,7 @@
   fetchers ? { },
   # The Python the project builds and runs with. It must satisfy the
   # project's requires-python.
-  python ? pkgs.python3,
+  python ? python3,
   # The purifier lockfile. A file outside `src` replaces any copy in it,
   # so a packaging flake can build a project its author does not change.
   lockFile ? src + "/uv-purifier.lock.json",
@@ -55,15 +74,6 @@
   testCommand ? [ "pytest" ],
 }:
 let
-  inherit (pkgs)
-    stdenvNoCC
-    linkFarm
-    runCommand
-    writeText
-    unzip
-    uv
-    glibc
-    ;
   inherit (builtins)
     concatMap
     elemAt
@@ -101,10 +111,21 @@ let
         cp ${lockFile} $out/uv-purifier.lock.json
       '';
 
-  # The library's fetchers get the package set, so that a file entry's
-  # mirrors are tried.
+  # The fetchers of the shared library read their tools from a package set.
+  # uv.lock records only files and git checkouts, so this set holds the
+  # packages those fetches use.
   fetchArgs = {
-    inherit pkgs;
+    pkgs = {
+      inherit
+        fetchurl
+        fetchgit
+        runCommand
+        writeText
+        unzip
+        zstd
+        python3
+        ;
+    };
   }
   // fetchers;
   fetch = purifier.fetchEntry fetchArgs;

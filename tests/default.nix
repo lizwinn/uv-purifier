@@ -9,16 +9,33 @@
 {
   pkgs,
   cli,
-  # The flake's library: `uv-purifier`, with the builder, and `purifier`.
+  # The flake's library: `uv-purifier`, with readLock, and `purifier`.
   lib',
+  # The flake's `overlays.default`, which adds `buildUvProject`.
+  overlay,
 }:
 let
   inherit (pkgs) lib runCommand;
   inherit (lib') purifier;
 
-  # Every fixture builds the way a consumer's flake does: through the
-  # library's builder, with a package set.
-  build = args: lib'.uv-purifier.buildUvProject ({ inherit pkgs; } // args);
+  # The package set with the overlay a consumer applies.
+  withBuilder = pkgs.extend overlay;
+
+  # Every fixture builds the way a consumer's package does: through the
+  # builder in the package set.
+  build = withBuilder.buildUvProject;
+
+  # A consumer's package, written for callPackage, that takes the builder
+  # by name.
+  consumer = withBuilder.callPackage (
+    { buildUvProject }: (buildUvProject { src = ./fixtures/simple; }).packages.simple
+  ) { };
+
+  # The builder with `uv` replaced through `override`: the replacement
+  # reaches the builds.
+  overridden =
+    (withBuilder.buildUvProject.override { uv = pkgs.hello; } { src = ./fixtures/simple; })
+    .packages.simple;
 
   # A single project built with hatchling. attrs installs from its wheel,
   # docopt, which has only an sdist, is built with the locked setuptools,
@@ -139,6 +156,18 @@ in
       })).scripts.simple
       "simple attrs=25.3.0 docopt=0.6.2 markupsafe=3.0.3 &lt;nix&gt;";
 
+  # A package in the consumer's package set takes the builder by name, and
+  # `buildUvProject.override` replaces a package the builder takes.
+  overlay =
+    let
+      overrideReaches = lib.elem pkgs.hello overridden.nativeBuildInputs;
+    in
+    if overrideReaches then
+      runs "overlay" consumer.scripts.simple
+        "simple attrs=25.3.0 docopt=0.6.2 markupsafe=3.0.3 &lt;nix&gt;"
+    else
+      throw "buildUvProject.override { uv = ...; } did not reach the build of the package";
+
   # The package of the virtual root has app, its scripts and every member
   # app depends on.
   workspace = runs "workspace" workspace.packages.workspace.scripts.app "hello, nix six=1.17.0";
@@ -220,7 +249,7 @@ in
 
   flask = import ./real-world/flask {
     inherit pkgs cli;
-    inherit (lib'.uv-purifier) buildUvProject;
+    inherit (withBuilder) buildUvProject;
   };
 
   # The unit tests of the lock tool and of split_requirements.py.
