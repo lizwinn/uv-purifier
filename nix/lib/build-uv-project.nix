@@ -19,15 +19,18 @@
 #   runtime dependencies installed, with the member's scripts in `bin/`.
 {
   lib,
+  pkgs,
   stdenvNoCC,
   linkFarm,
   runCommand,
   writeText,
-  fetchgit,
   unzip,
   uv,
   python3,
   glibc,
+  # The shared library of the nix-purifiers (github:nix-purifiers/purifier),
+  # which fetches download entries and holds the wheel helpers.
+  purifier,
 }:
 {
   # The project root, which holds uv.lock, uv-purifier.lock.json and the
@@ -37,7 +40,8 @@
   # project's requires-python.
   python ? python3,
   lockFile ? src + "/uv-purifier.lock.json",
-  # A replacement for the fetcher of locked files; see nix/lib/fetch.nix.
+  # A replacement for nixpkgs' fetchurl, for credentials or mirrors. It
+  # takes the arguments of nixpkgs' fetchurl.
   fetchurl ? null,
   # The local packages that uv.lock names by a path outside `src`, such as
   # "../shared", each mapped to a Nix path that holds it. A path inside
@@ -55,15 +59,23 @@ let
     ;
 
   lock = import ./lock.nix { inherit src lockFile; };
-  fetch = import ./fetch.nix { inherit fetchurl; };
+
+  # The library's fetchers, with nixpkgs' own unless `fetchurl` replaces
+  # one.
+  fetchers = {
+    inherit pkgs;
+  }
+  // lib.optionalAttrs (fetchurl != null) { inherit fetchurl; };
+  fetch = purifier.fetchEntry fetchers;
 
   platform = stdenvNoCC.hostPlatform;
   target = "Python ${python.pythonVersion} on ${platform.system}";
-  installs = import ./wheels.nix {
+  wheelTarget = {
     inherit (python) pythonVersion;
     arch = platform.parsed.cpu.name;
     glibcVersion = glibc.version;
   };
+  installs = purifier.wheels wheelTarget;
 
   # What installing a locked distribution needs on this system: its wheels
   # that install, or else its sdist and a build of it.
@@ -130,23 +142,25 @@ let
     ++ concatMap (key: concatMap (n: n.files) (requirementNeeds key)) builds
   );
 
-  wheelhouse = linkFarm "uv-purifier-wheelhouse" (
-    map (
-      name:
-      let
-        file =
-          lock.files.${name}
-            or (throw "uv-purifier: neither lockfile has the URL of ${name}. Run `uv-purifier lock`.");
-      in
-      {
-        inherit name;
-        path = fetch {
-          name = lock.storeName name;
-          inherit (file) url mirrors hash;
-        };
-      }
-    ) fileNames
+  # Every chosen file, as a file entry at its file name.
+  wheelhouse = purifier.tree (
+    fetchers
+    // {
+      name = "uv-purifier-wheelhouse";
+      entries = map (
+        name:
+        lock.files.${name}
+          or (throw "uv-purifier: neither lockfile has the URL of ${name}. Run `uv-purifier lock`.")
+      ) fileNames;
+    }
   );
+
+  # A file entry of the shared library for a URL and hash of uv.lock.
+  fileEntry = url: hash: {
+    path = lock.fileName url;
+    inherit url hash;
+    mirrors = [ ];
+  };
 
   # uv reads the wheelhouse and nothing else, with the Python of the build.
   uvEnv = {
@@ -192,26 +206,11 @@ let
     d:
     if d.kind == "git" then
       let
-        checkout = fetchgit {
-          inherit (d.git.git) url rev;
-          inherit (d.git) hash;
-          fetchSubmodules = d.git.git.submodules;
-          # uv-purifier writes every git entry without a .git, so
-          # `commitObject` is null and fetchgit's hash is reproducible.
-          leaveDotGit =
-            assert
-              !d.git.git.leaveDotGit
-              || throw "uv-purifier: the git entry of ${d.key} asks for a .git, which uv-purifier builds never need";
-            false;
-        };
+        checkout = fetch d.git;
       in
       if d.subdirectory == null then checkout else "${checkout}/${d.subdirectory}"
     else if d.kind == "url" then
-      fetch {
-        name = lock.storeName (lock.fileName d.value);
-        url = d.value;
-        hash = d.sdistHash;
-      }
+      fetch (fileEntry d.value d.sdistHash)
     else
       localPath d.value;
 
@@ -225,13 +224,7 @@ let
             {
               inherit (d.wheel) name;
               path =
-                if d.wheel.url != null then
-                  fetch {
-                    name = lock.storeName d.wheel.name;
-                    inherit (d.wheel) url hash;
-                  }
-                else
-                  localPath d.value;
+                if d.wheel.url != null then fetch (fileEntry d.wheel.url d.wheel.hash) else localPath d.value;
             }
           ]
         else
@@ -290,37 +283,9 @@ let
       or (throw "uv-purifier: uv-purifier.lock.json records no outputs of ${m.name}. Run `uv-purifier lock`.");
 
   # The file name of a member's wheel for this system and Python. The lock
-  # run built the wheel on its own system, so a compiled wheel's CPython
-  # tags and Linux platform tag are rewritten for this one; a pure wheel
-  # keeps its name.
-  wheelName =
-    lockedName:
-    let
-      parts = lib.splitString "-" (lib.removeSuffix ".whl" lockedName);
-      count = builtins.length parts;
-      head = lib.take (count - 3) parts;
-      pythonTag = builtins.elemAt parts (count - 3);
-      abiTag = builtins.elemAt parts (count - 2);
-      platformTag = builtins.elemAt parts (count - 1);
-      cpython = "cp${lib.replaceStrings [ "." ] [ "" ] python.pythonVersion}";
-      retag = tag: if builtins.match "cp3[0-9]+" tag != null then cpython else tag;
-      platform =
-        if platformTag == "any" then
-          "any"
-        else if builtins.match "linux_.*" platformTag != null then
-          "linux_${stdenvNoCC.hostPlatform.parsed.cpu.name}"
-        else
-          throw "uv-purifier: the lock run built ${lockedName}, whose platform tag ${platformTag} is not one a uv build makes on Linux";
-    in
-    lib.concatStringsSep "-" (
-      head
-      ++ [
-        (if abiTag == "abi3" then pythonTag else retag pythonTag)
-        (retag abiTag)
-        platform
-      ]
-    )
-    + ".whl";
+  # run built the wheel on its own system, so a compiled wheel's tags are
+  # rewritten for this one; a pure wheel keeps its name.
+  wheelName = purifier.wheelName wheelTarget;
 
   packages = listToAttrs (
     map (m: {

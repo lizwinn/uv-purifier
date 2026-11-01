@@ -6,15 +6,26 @@
 # builders, so a package written for callPackage takes it by name. A
 # consumer that lists this flake in `projects` holds it as
 # `uv-purifier/default`, which its package sets apply by default.
-{ closure-lib, ... }:
+#
+# Both take the shared purifier library: the builder its functions, and the
+# command its source, for the builds it runs outside a flake.
+{ closure-lib, closure-inputs, ... }:
 let
   packages = closure-lib.caisson.nixpkgs.mkPackagesOverlay ../../pkgs "uv-purifier";
 in
 {
   overlay =
     final: prev:
-    packages final prev
+    let
+      added = packages final prev;
+    in
+    added
     // {
-      buildUvProject = final.callPackage ../../nix/lib/build-uv-project.nix { };
+      uv-purifier = added.uv-purifier // {
+        cli = added.uv-purifier.cli.override { purifierSource = closure-inputs.purifier; };
+      };
+      buildUvProject = final.callPackage ../../nix/lib/build-uv-project.nix {
+        inherit (closure-lib) purifier;
+      };
     };
 }

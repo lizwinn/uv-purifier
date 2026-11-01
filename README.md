@@ -91,8 +91,12 @@ it is built for. Each build checks that it made what the lockfile records.
   `src`, such as `pathSources."../shared" = ../shared;`. A flake's source
   tree cannot reach outside itself, so the build takes such a package from
   this argument. A path inside `src` needs no entry.
-- `fetchurl`, a replacement fetcher for credentials or mirrors
-  (`nix/lib/fetch.nix`).
+- `fetchurl`, a replacement for nixpkgs' fetchurl, for credentials or
+  mirrors. It takes the arguments of nixpkgs' fetchurl.
+
+The downloads are fetched by the shared library of the nix-purifiers,
+[purifier](https://github.com/nix-purifiers/purifier), which also holds
+the wheel selection.
 
 Every source uv.lock records builds:
 
@@ -117,7 +121,10 @@ fetched and built: the dependencies, including the default dependency
 groups, with their hashes, the packages from git, URLs and local paths from
 the wheels Nix built, and the workspace members and editable path
 dependencies as editable installs. Run commands in it with
-`uv run --no-sync`, or with `.venv/bin/` directly.
+`uv run --no-sync`, or with `.venv/bin/` directly. An editor or language
+server that uses the project's `.venv`, such as pyright, Pylance or
+basedpyright, resolves every import from it. The checks run pyright on a
+synced fixture to keep that so.
 
 ## Publish
 
@@ -132,7 +139,7 @@ Nix built with `uv publish`. Arguments after `--` go to `uv publish`.
 ## Limits
 
 - The build runs on Linux, for x86_64 and aarch64. The wheel selection
-  (`nix/lib/wheels.nix`) reads the Linux platform tags of a wheel against
+  (the shared library's `wheels`) reads the Linux platform tags of a wheel against
   the glibc of the package set. uv.lock and `uv-purifier.lock.json` cover
   every platform, so a lock made anywhere builds on both.
 - A build backend reports its added requirements for the platform of the

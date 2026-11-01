@@ -2,11 +2,16 @@
 #
 # Unit tests of the Nix library that need no build: wheel selection, and the
 # check that uv-purifier.lock.json still matches uv.lock.
-{ pkgs }:
+{
+  pkgs,
+  # The shared purifier library.
+  purifier,
+}:
 let
   inherit (pkgs) lib;
 
-  installs = import ../nix/lib/wheels.nix {
+  # The wheel selection of the shared library, as buildUvProject uses it.
+  installs = purifier.wheels {
     pythonVersion = "3.14";
     arch = "x86_64";
     glibcVersion = "2.40";

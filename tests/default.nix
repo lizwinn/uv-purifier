@@ -7,6 +7,8 @@
   # The flake's default package overlay, which adds buildUvProject.
   overlay,
   cli,
+  # The shared purifier library, from the flake's library.
+  purifier,
 }:
 let
   inherit (pkgs) lib;
@@ -41,31 +43,41 @@ let
   # Runs `uv-purifier sync` on a copy of a fixture, with the inputs Nix
   # built for it, then runs a script of the .venv it installed. `edit`
   # changes a member's source afterwards, and the script runs again: a
-  # member installed as editable prints `edited`.
+  # member installed as editable prints `edited`. pyright, the type checker
+  # behind Pylance and the pyright language server, then checks `sources`
+  # against the .venv, as an editor would: every import must resolve.
   syncs =
-    name: fixture: project: script: expected: edit: edited:
-    runCommand "uv-purifier-test-sync-${name}" { nativeBuildInputs = [ cli ]; } ''
-      cp -r ${fixture} project
-      chmod -R u+w project
-      cd project
-      # Python checks its cached bytecode by the modification time in
-      # seconds and the size of the source, so the edit right after the
-      # first run would go unseen through a cache.
-      export HOME=$TMPDIR UV_CACHE_DIR=$TMPDIR/uv-cache PYTHONDONTWRITEBYTECODE=1
-      uv-purifier sync --inputs ${project.interactive}
-      check() {
-        output=$(.venv/bin/${script})
-        echo "$output"
-        if [ "$output" != "$1" ]; then
-          echo "expected: $1" >&2
-          exit 1
-        fi
+    name: fixture: project: script: expected: edit: edited: sources:
+    runCommand "uv-purifier-test-sync-${name}"
+      {
+        nativeBuildInputs = [
+          cli
+          pkgs.pyright
+        ];
       }
-      check ${lib.escapeShellArg expected}
-      ${edit}
-      check ${lib.escapeShellArg edited}
-      touch $out
-    '';
+      ''
+        cp -r ${fixture} project
+        chmod -R u+w project
+        cd project
+        # Python checks its cached bytecode by the modification time in
+        # seconds and the size of the source, so the edit right after the
+        # first run would go unseen through a cache.
+        export HOME=$TMPDIR UV_CACHE_DIR=$TMPDIR/uv-cache PYTHONDONTWRITEBYTECODE=1
+        uv-purifier sync --inputs ${project.interactive}
+        check() {
+          output=$(.venv/bin/${script})
+          echo "$output"
+          if [ "$output" != "$1" ]; then
+            echo "expected: $1" >&2
+            exit 1
+          fi
+        }
+        check ${lib.escapeShellArg expected}
+        ${edit}
+        check ${lib.escapeShellArg edited}
+        pyright --pythonpath .venv/bin/python ${lib.escapeShellArgs sources}
+        touch $out
+      '';
 
   # Runs a script of an environment and compares what it prints.
   runs =
@@ -100,13 +112,15 @@ in
   sync-workspace =
     syncs "workspace" ./fixtures/workspace workspace "app" "hello, nix six=1.17.0"
       "sed -i 's/hello/greetings/' packages/greeting/src/greeting/__init__.py"
-      "greetings, nix six=1.17.0";
+      "greetings, nix six=1.17.0"
+      [ "packages" ];
 
   sync-sources =
     syncs "sources" ./fixtures/sources sources "sources"
       "attrs=25.3.0 six=1.17.0 idna=3.10 localdir 0.3.0 localsdist 0.4.0 localwheel 0.5.0"
       "sed -i 's/attrs=/attrs: /' src/sources/__init__.py"
-      "attrs: 25.3.0 six=1.17.0 idna=3.10 localdir 0.3.0 localsdist 0.4.0 localwheel 0.5.0";
+      "attrs: 25.3.0 six=1.17.0 idna=3.10 localdir 0.3.0 localsdist 0.4.0 localwheel 0.5.0"
+      [ "src" ];
 
   # A member's package is what `uv build` makes: its sdist and its wheel.
   workspace-package = runCommand "uv-purifier-test-workspace-package" { } ''
@@ -116,7 +130,7 @@ in
     touch $out
   '';
 
-  nix-library = import ./nix-library.nix { inherit pkgs; };
+  nix-library = import ./nix-library.nix { inherit pkgs purifier; };
 
   negative = import ./negative.nix { inherit pkgs; };
 

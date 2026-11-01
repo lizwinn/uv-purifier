@@ -668,13 +668,18 @@ def nix_build(root, package=None):
     of a development environment. Returns the store path."""
     library = os.environ.get("UV_PURIFIER_NIX_LIB")
     nixpkgs = os.environ.get("UV_PURIFIER_NIXPKGS")
-    if not library or not nixpkgs:
-        raise Error("this command needs the uv-purifier package, which sets UV_PURIFIER_NIX_LIB and UV_PURIFIER_NIXPKGS")
+    purifier = os.environ.get("UV_PURIFIER_LIBRARY")
+    if not library or not nixpkgs or not purifier:
+        raise Error(
+            "this command needs the uv-purifier package, which sets UV_PURIFIER_NIX_LIB, "
+            "UV_PURIFIER_NIXPKGS and UV_PURIFIER_LIBRARY"
+        )
     args = [
         "nix-build",
         "--no-out-link",
         os.path.join(library, "cli.nix"),
         "--arg", "nixpkgs", nixpkgs,
+        "--arg", "purifier", purifier,
         "--argstr", "src", root,
     ]
     if package is not None:

@@ -69,17 +69,19 @@ reports the NAR hash that nixpkgs' `fetchgit` checks.
 
 ## Choosing the files for a system
 
-`nix/lib/wheels.nix` decides from a wheel's file name whether it installs
+The `wheels` function of the shared purifier library
+(github:nix-purifiers/purifier, which took it from this repository)
+decides from a wheel's file name whether it installs
 with the build's Python on the build's system (PEP 425 tags, manylinux
 1, 2010, 2014 and `2_N` against the glibc of the package set, `abi3`). For
 each package from an index, `nix/lib/build-uv-project.nix` takes its wheels
 that install, or else its sdist and the build of it. A build adds the files
 of its set of build requirements, chosen the same way, and the builds those
-need in turn. Every chosen file is fetched as a fixed-output derivation and
-linked into one flat directory, the wheelhouse.
+need in turn. Every chosen file is a file entry, and the library's `tree`
+fetches them and links them into one flat directory, the wheelhouse.
 
 uv makes the final choice among the fetched wheels when it installs. When a
-wheel that `wheels.nix` accepts is one uv rejects, uv tries to build the
+wheel that `wheels` accepts is one uv rejects, uv tries to build the
 sdist, which is missing from the wheelhouse, and the build fails with uv's
 error.
 

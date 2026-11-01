@@ -13,7 +13,17 @@
   git,
   nix-prefetch-git,
   path,
+  # The source of the shared purifier library, which the default package
+  # overlay passes.
+  purifierSource,
 }:
+let
+  library =
+    if purifierSource == null then
+      throw "uv-purifier: the cli package needs the source of the purifier library; take it from the flake's package overlay"
+    else
+      purifierSource;
+in
 stdenvNoCC.mkDerivation {
   pname = "uv-purifier";
   version = lib.removeSuffix "\n" (builtins.readFile ../../version.txt);
@@ -43,7 +53,8 @@ stdenvNoCC.mkDerivation {
         ]
       } \
       --set UV_PURIFIER_NIX_LIB $out/share/uv-purifier/nix-lib \
-      --set UV_PURIFIER_NIXPKGS ${path}
+      --set UV_PURIFIER_NIXPKGS ${path} \
+      --set UV_PURIFIER_LIBRARY ${library}
     runHook postInstall
   '';
 
