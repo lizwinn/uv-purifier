@@ -39,6 +39,13 @@ nix build --impure --expr '
   (pkgs.uv-purifier.buildUvProject { src = ./.; }).packages.app'
 ```
 
+This uses the purifier's pinned nixpkgs, matching the lock command above.
+To build with ambient `<nixpkgs>` from your Nix search path instead,
+replace `import purifier.inputs.nixpkgs` with `import <nixpkgs>`.
+Both forms need no Nix files in your project. The build tool and language
+versions must match the lockfile; with ambient nixpkgs, lock with the
+purifier from that package set or pass a compatible toolchain to the builder.
+
 `overlays.default` adds one attribute to the package set: the scope
 `uv-purifier`. The scope holds the builder `buildUvProject` and the
 `uv-purifier` command.
