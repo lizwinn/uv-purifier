@@ -524,7 +524,15 @@ def lock(root):
                 path = f"git/{package['name']}-{commit}"
                 artifacts[path] = {
                     "path": path,
-                    "git": {"url": repository, "rev": commit, "submodules": True},
+                    # The build needs no .git: it gives setuptools-scm and
+                    # hatch-vcs the version from uv.lock.
+                    "git": {
+                        "url": repository,
+                        "rev": commit,
+                        "submodules": True,
+                        "leaveDotGit": False,
+                        "commitObject": None,
+                    },
                     "hash": nar_hash,
                 }
                 sources[key] = path

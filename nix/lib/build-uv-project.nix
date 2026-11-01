@@ -196,6 +196,13 @@ let
           inherit (d.git.git) url rev;
           inherit (d.git) hash;
           fetchSubmodules = d.git.git.submodules;
+          # uv-purifier writes every git entry without a .git, so
+          # `commitObject` is null and fetchgit's hash is reproducible.
+          leaveDotGit =
+            assert
+              !d.git.git.leaveDotGit
+              || throw "uv-purifier: the git entry of ${d.key} asks for a .git, which uv-purifier builds never need";
+            false;
         };
       in
       if d.subdirectory == null then checkout else "${checkout}/${d.subdirectory}"

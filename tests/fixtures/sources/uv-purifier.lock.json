@@ -19,7 +19,9 @@
       "git": {
         "url": "https://github.com/python-attrs/attrs",
         "rev": "3dca08ce5bbe673d7df25f44f3dda92505d1043d",
-        "submodules": true
+        "submodules": true,
+        "leaveDotGit": false,
+        "commitObject": null
       },
       "hash": "sha256-Xndfdo4U573e71orFyGEoitFM2WS5Z7Gs395JFmdu9o="
     },

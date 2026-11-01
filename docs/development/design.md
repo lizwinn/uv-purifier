@@ -44,8 +44,11 @@ reports the NAR hash that nixpkgs' `fetchgit` checks.
 - `artifacts`: the download entries of the shared purifier library. A file
   entry `{ path, url, mirrors, hash }` is a file of a build requirement,
   with its file name as `path`, an empty `mirrors` list and an SRI `hash`.
-  A git entry `{ path, git = { url, rev, submodules }, hash }` is a
-  checkout, with `submodules = true` because uv checks out submodules.
+  A git entry `{ path, git = { url, rev, submodules, leaveDotGit,
+  commitObject }, hash }` is a checkout, with `submodules = true` because
+  uv checks out submodules. `leaveDotGit` is false and `commitObject` is
+  null, because the build passes the version from uv.lock to
+  setuptools-scm and hatch-vcs and needs no `.git`.
 - `buildRequirements`: each distinct set, with its resolved packages and
   the file names of their wheels and sdist. A set that did not resolve has
   `error` instead, and the Nix build reports it only if it has to build
