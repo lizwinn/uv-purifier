@@ -106,6 +106,9 @@ system from `entriesFor`.
 
 ## Development loop
 
+uv has no plugin mechanism, so uv-purifier is a separate command. It runs
+uv for every step that resolves or installs packages.
+
 ```zsh
 nix run github:nix-purifiers/uv-purifier -- prefetch
 uv run --no-sync pytest
@@ -121,6 +124,12 @@ and local paths from the wheels Nix built; and the workspace members and
 editable path dependencies as editable installs. Run the project and its
 tests with `uv run --no-sync`, or with `.venv/bin/` directly. An edit to a
 member shows at once.
+
+A uv command that needs a package outside the lock, such as `uv add` of a
+new dependency, downloads it from the index when the network is up. With
+the network cut off, uv stops with its own network error, which does not
+name `uv-purifier lock`. In both cases the next steps are the ones below:
+`uv-purifier lock`, then `uv-purifier prefetch`.
 
 To add a dependency, add it with uv, which needs the network, then relock
 and prefetch again. `uv-purifier lock` keeps uv.lock's resolution: it runs
