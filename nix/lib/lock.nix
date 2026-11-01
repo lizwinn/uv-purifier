@@ -1,12 +1,14 @@
 # SPDX-License-Identifier: MIT
 #
-# Reads a uv project's two lockfiles: uv.lock, which uv writes, and
-# uv-purifier.lock.json, which `uv-purifier lock` writes beside it.
+# Reads a uv project's two lockfiles: uv.lock, which uv writes in the
+# project, and uv-purifier.lock.json, which `uv-purifier lock` writes beside
+# it or at another path. `problems` holds why they cannot be used, each
+# naming the command that fixes it; read-lock.nix gives them to the purifier
+# library's checkLock.
 {
   # The project root, which holds uv.lock and pyproject.toml.
   src,
   lockFile ? src + "/uv-purifier.lock.json",
-  uvLockFile ? src + "/uv.lock",
 }:
 let
   inherit (builtins)
@@ -31,9 +33,15 @@ let
 
   supportedVersion = import ./lock-version.nix;
 
+  uvLockFile = src + "/uv.lock";
+  exists = builtins.pathExists lockFile;
+
+  # A JSON file that does not parse fails evaluation here: builtins.fromJSON
+  # raises an error that no Nix expression can catch, so this message is the
+  # context of that error rather than one of `problems`.
   purifier =
-    if !builtins.pathExists lockFile then
-      throw "uv-purifier: ${toString lockFile} does not exist. Run `uv-purifier lock` beside uv.lock, and add the file to the repository."
+    if !exists then
+      { }
     else
       builtins.addErrorContext "while reading ${toString lockFile}, which is not valid JSON; if it was edited by hand or merged with conflicts, rewrite it with `uv-purifier lock`" (
         fromJSON (readFile lockFile)
@@ -214,7 +222,7 @@ let
   purifierFiles = map (artifact: {
     name = artifact.path;
     value = artifact;
-  }) (filter (artifact: artifact ? url) purifier.artifacts);
+  }) (filter (artifact: artifact ? url) (purifier.artifacts or [ ]));
 
   files = listToAttrs (uvFiles ++ purifierFiles);
 
@@ -222,7 +230,7 @@ let
     map (artifact: {
       name = artifact.path;
       value = artifact;
-    }) (filter (artifact: artifact ? git) purifier.artifacts)
+    }) (filter (artifact: artifact ? git) (purifier.artifacts or [ ]))
   );
 
   # The hash the lock tool records over uv.lock and the pyproject.toml files
@@ -240,29 +248,46 @@ let
     "uv.lock ${hashFile "sha256" uvLockFile}\n"
     + concatStringsSep "" (map (f: "${f} ${hashFile "sha256" (src + "/${f}")}\n") treeFiles)
   );
+  # Why the lockfiles cannot be used, the first that applies, naming the
+  # command that fixes it.
+  problems =
+    if !exists then
+      [
+        "uv-purifier: ${toString lockFile} does not exist. Run `uv-purifier lock` beside uv.lock, and add the file to the repository."
+      ]
+    else if purifier.version or null != supportedVersion then
+      [
+        "uv-purifier: ${toString lockFile} has lock format version ${
+          toString (purifier.version or null)
+        }; this library reads version ${toString supportedVersion}. Run `uv-purifier lock` with the version that provides this library."
+      ]
+    else if purifier.contentHash or null != contentHash then
+      [
+        "uv-purifier: ${toString lockFile} was changed after `uv-purifier lock` wrote it, by hand or by a merge. Rewrite it with `uv-purifier lock`."
+      ]
+    else if purifier.inputsHash or null != inputsHash then
+      [
+        "uv-purifier: ${toString lockFile} was made for another uv.lock or another pyproject.toml of a source tree in the project. If pyproject.toml changed, run `uv lock`; then run `uv-purifier lock`."
+      ]
+    else
+      [ ];
 in
-assert
-  purifier.version == supportedVersion
-  || throw "uv-purifier: ${toString lockFile} has lock format version ${toString purifier.version}; this library reads version ${toString supportedVersion}. Run `uv-purifier lock` with the version that provides this library.";
-assert
-  purifier.contentHash or null == contentHash
-  || throw "uv-purifier: ${toString lockFile} was changed after `uv-purifier lock` wrote it, by hand or by a merge. Rewrite it with `uv-purifier lock`.";
-assert
-  purifier.inputsHash == inputsHash
-  || throw "uv-purifier: ${toString lockFile} was made for another uv.lock or another pyproject.toml of a source tree in the project. If pyproject.toml changed, run `uv lock`; then run `uv-purifier lock`.";
 {
   inherit
     purifier
+    problems
     uvLock
     members
     distributions
     direct
     files
+    gitEntries
     insideProject
     fileName
     storeName
     ;
-  inherit (purifier) builds buildRequirements;
+  builds = purifier.builds or { };
+  buildRequirements = purifier.buildRequirements or [ ];
   memberNames = map (m: m.name) members;
   # Every name in `files`, for tests.
   fileNames = attrNames files;

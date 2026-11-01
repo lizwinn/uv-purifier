@@ -73,8 +73,10 @@ let
     cp -r ${./fixtures/simple} ${name}
     chmod -R u+w ${name}
     (cd ${name} && ${case.break})
+    # readLock, with its problems raised as the purifier library's
+    # checkLock raises them.
     if nix-instantiate --eval --strict --expr \
-        "(import ${../nix/lib}/lock.nix { src = $PWD/${name}; }).purifier.version" \
+        "let lock = import ${../nix/lib}/read-lock.nix { lib = import ${pkgs.path}/lib; } { src = $PWD/${name}; }; in if lock.problems != [ ] then throw (builtins.concatStringsSep \"\n\" lock.problems) else builtins.length lock.entries" \
         > ${name}.out 2> ${name}.err; then
       ${
         if case.expect == null then

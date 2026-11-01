@@ -66,7 +66,10 @@ let
     if lib.pathIsDirectory target then source target else target
   );
 
-  buildUvProject = import ./build-uv-project.nix { purifier = import purifier { inherit lib; }; };
+  buildUvProject = import ./build-uv-project.nix {
+    purifier = import purifier { inherit lib; };
+    inherit lib;
+  };
   projectSrc = source root;
   project = buildUvProject (
     {

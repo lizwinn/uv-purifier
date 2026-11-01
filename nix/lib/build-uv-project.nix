@@ -27,13 +27,15 @@
 #   from.
 {
   # The shared library of the nix-purifiers (github:nix-purifiers/purifier),
-  # which fetches download entries and holds the wheel helpers.
+  # which checks the lock, fetches download entries and holds the wheel
+  # helpers.
   purifier,
+  lib,
 }:
 {
   pkgs,
-  # The project root, which holds uv.lock, uv-purifier.lock.json and the
-  # root pyproject.toml.
+  # The project root, which holds uv.lock, the root pyproject.toml and, unless
+  # `lockFile` names another path, uv-purifier.lock.json.
   src,
   # The fetchers of the shared library's fetchEntry and tree, such as a
   # `fetchurl` that sends credentials or uses a company mirror.
@@ -44,8 +46,6 @@
   # The purifier lockfile. A file outside `src` replaces any copy in it,
   # so a packaging flake can build a project its author does not change.
   lockFile ? src + "/uv-purifier.lock.json",
-  # uv's lockfile, for a `src` that has none, or to replace the one it has.
-  uvLock ? src + "/uv.lock",
   # The local packages that uv.lock names by a path outside `src`, such as
   # "../shared", each mapped to a Nix path that holds it. A path inside
   # `src` is read from `src`.
@@ -56,7 +56,6 @@
 }:
 let
   inherit (pkgs)
-    lib
     stdenvNoCC
     linkFarm
     runCommand
@@ -74,21 +73,31 @@ let
     map
     ;
 
-  lock = import ./lock.nix {
-    inherit src lockFile;
-    uvLockFile = uvLock;
-  };
+  # The lock in memory of the purifier contract, checked: evaluation fails
+  # here with the problems of a stale, edited or incomplete lockfile.
+  locked = purifier.checkLock (import ./read-lock.nix { inherit lib; } { inherit src lockFile; });
+
+  # The details of the lockfiles that the builds need beyond the lock in
+  # memory: which packages build, and with which build requirements.
+  lock = import ./lock.nix { inherit src lockFile; };
+
+  # The downloads of this system, by file name.
+  systemFiles = listToAttrs (
+    map (entry: {
+      name = entry.path;
+      value = entry;
+    }) (purifier.entriesFor stdenvNoCC.hostPlatform.system locked)
+  );
 
   # The source the builds run in: `src` itself, or a copy of it with the
-  # lockfiles given outside it, since uv reads uv.lock from the project.
+  # lockfile given outside it.
   buildSrc =
-    if lockFile == src + "/uv-purifier.lock.json" && uvLock == src + "/uv.lock" then
+    if lockFile == src + "/uv-purifier.lock.json" then
       src
     else
       runCommand "${baseNameOf (toString src)}-locked" { } ''
         cp -r ${src} $out
         chmod -R u+w $out
-        cp ${uvLock} $out/uv.lock
         cp ${lockFile} $out/uv-purifier.lock.json
       '';
 
@@ -174,11 +183,12 @@ let
     ++ concatMap (key: concatMap (n: n.files) (requirementNeeds key)) builds
   );
 
-  # Every chosen file, as a file entry at its file name.
+  # Every chosen file, as the download entry of this system at its file
+  # name.
   wheelhouseEntries = map (
     name:
-    lock.files.${name}
-      or (throw "uv-purifier: neither lockfile has the URL of ${name}. Run `uv-purifier lock`.")
+    systemFiles.${name}
+      or (throw "uv-purifier: the lock has no download of ${name} for ${stdenvNoCC.hostPlatform.system}. Run `uv-purifier lock`.")
   ) fileNames;
 
   wheelhouse = purifier.tree (
@@ -233,19 +243,6 @@ let
     else
       pathSources.${path}
         or (throw "uv-purifier: uv.lock names the local path ${path}, which is outside `src`. Pass it in `pathSources`, as `pathSources.\"${path}\" = <a Nix path>;`.");
-
-  # The download entries of a direct package: a git checkout, or the file
-  # at a URL. A local package has none.
-  directEntries =
-    d:
-    if d.kind == "git" then
-      [ d.git ]
-    else if d.kind == "url" then
-      [
-        (if d.wheel != null then fileEntry d.wheel.url d.wheel.hash else fileEntry d.value d.sdistHash)
-      ]
-    else
-      [ ];
 
   # The source a direct package builds from: a source tree, or an archive
   # that the build unpacks.
@@ -322,49 +319,8 @@ let
     }
   );
 
-  # What a member's build produces, derived from uv.lock and the member's
-  # pyproject.toml (src/uv_purifier.py, derived_outputs): the sdist and a
-  # pure wheel named after the normalized name and the version uv.lock
-  # records, and the scripts of [project.scripts] and [project.gui-scripts].
-  derivedOutputs =
-    m:
-    let
-      version = memberVersion m;
-      stem = lib.toLower (
-        lib.concatStrings (
-          map (part: if builtins.isList part then "_" else part) (builtins.split "[-_.]+" m.name)
-        )
-      );
-      project =
-        (builtins.fromTOML (builtins.readFile (src + "/${m.path}/pyproject.toml"))).project or { };
-      dynamic = project.dynamic or [ ];
-    in
-    {
-      sdist = if version == "" then null else "${stem}-${version}.tar.gz";
-      wheel = if version == "" then null else "${stem}-${version}-py3-none-any.whl";
-      scripts =
-        if lib.elem "scripts" dynamic || lib.elem "gui-scripts" dynamic then
-          null
-        else
-          lib.sort (a: b: a < b) (
-            lib.unique (
-              builtins.attrNames (project.scripts or { }) ++ builtins.attrNames (project.gui-scripts or { })
-            )
-          );
-    };
-
-  # What a member's build produces: what Nix derives, with what
-  # `uv-purifier lock` recorded where the build makes something else.
-  outputsOf =
-    m:
-    let
-      outputs = derivedOutputs m // (lock.purifier.outputs or { }).${m.name} or { };
-      unknown = lib.filter (field: outputs.${field} == null) (builtins.attrNames outputs);
-    in
-    if unknown != [ ] then
-      throw "uv-purifier: uv-purifier.lock.json records no ${lib.concatStringsSep ", " unknown} of ${m.name}. Run `uv-purifier lock`."
-    else
-      outputs;
+  # What a member's build produces, from the lock in memory.
+  outputsOf = m: locked.outputs.${m.name};
 
   # The file name of a member's wheel for this system and Python. The lock
   # run built the wheel on its own system, so a compiled wheel's tags are
@@ -532,7 +488,9 @@ let
         '') (builtins.attrNames distributions)}
       '';
 
-  fetches = wheelhouseEntries ++ concatMap directEntries lock.direct;
+  # Every download the lock records, with `systems` where a download is
+  # needed only on some systems.
+  fetches = locked.entries;
 
   # What `uv-purifier prefetch` installs the project's .venv from: the
   # Python of the build, the wheelhouse, and the wheels of the direct

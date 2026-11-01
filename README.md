@@ -74,11 +74,19 @@ defines are included.
   such as `fetchers.fetchurl` for a company mirror or credentials.
 - `python` (default `pkgs.python3`), which must satisfy the project's
   `requires-python`.
-- `lockFile` (default `src + "/uv-purifier.lock.json"`) and `uvLock`
-  (default `src + "/uv.lock"`). A file given outside `src` replaces any
-  copy in it, so a packaging flake can build a project its author does not
-  change, with the lockfiles kept beside the packaging. Every command takes
+- `lockFile` (default `src + "/uv-purifier.lock.json"`). A file given
+  outside `src` replaces any copy in it, so a packaging flake can build a
+  project its author does not change, with the purifier lockfile kept
+  beside the packaging; uv.lock stays in the project. Every command takes
   `--lockfile <path>` for the same purpose.
+
+`lib.uv-purifier.readLock { src, lockFile ? ... }` reads uv.lock and the
+purifier lockfile into the lock in memory of the purifier contract,
+`{ purifier, entries, outputs, problems }`, which tools that read every
+purifier, such as an SBOM generator, read in one shape. A compiled wheel's
+entry carries the `systems` its platform tags name. `buildUvProject` checks
+it with the purifier library's `checkLock` and takes the downloads of its
+system from `entriesFor`.
 - `pathSources`, the local packages that uv.lock names by a path outside
   `src`, such as `pathSources."../shared" = ../shared;`. A flake's source
   tree cannot reach outside itself. A path inside `src` needs no entry.

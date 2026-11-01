@@ -6,6 +6,8 @@
   pkgs,
   # The shared purifier library.
   purifier,
+  # lib.uv-purifier.readLock.
+  readLock,
 }:
 let
   inherit (pkgs) lib;
@@ -47,25 +49,26 @@ let
     pythonTwoOnly = false;
   };
 
-  # A uv.lock that differs from the one uv-purifier.lock.json was made
-  # for: the lockfile must be refused.
-  changedUvLock = builtins.toFile "uv.lock" (
-    builtins.readFile ./fixtures/simple/uv.lock + "\n# changed\n"
-  );
-  staleLock =
-    builtins.tryEval
-      (import ../nix/lib/lock.nix {
-        src = ./fixtures/simple;
-        uvLockFile = changedUvLock;
-      }).purifier;
-  currentLock =
-    builtins.tryEval
-      (import ../nix/lib/lock.nix { src = ./fixtures/simple; }).purifier.version;
+  # The lock in memory of the simple fixture: no problems, the shape that
+  # the purifier library's checkLock accepts, and `systems` by wheel tag.
+  locked = readLock { src = ./fixtures/simple; };
+  entryAt = name: lib.findFirst (e: e.path == name) null locked.entries;
+  x86Wheel = "markupsafe-3.0.3-cp314-cp314-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl";
+  armWheel = "markupsafe-3.0.3-cp314-cp314-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl";
+  x86Paths = map (e: e.path) (purifier.entriesFor "x86_64-linux" locked);
+  lockCases = {
+    noProblems = locked.problems == [ ];
+    checked = (builtins.tryEval (builtins.deepSeq (purifier.checkLock locked).entries true)).success;
+    compiledWheelSystems = (entryAt x86Wheel).systems == [ "x86_64-linux" ];
+    pureWheelSystems = (entryAt "attrs-25.3.0-py3-none-any.whl").systems == null;
+    sdistSystems = (entryAt "docopt-0.6.2.tar.gz").systems == null;
+    entriesForSystem = lib.elem x86Wheel x86Paths && !lib.elem armWheel x86Paths;
+    outputs = locked.outputs.simple.scripts == [ "simple" ];
+  };
 
   failures =
     lib.filter (name: wheelCases.${name} != wheelExpected.${name}) (lib.attrNames wheelCases)
-    ++ lib.optional staleLock.success "a stale uv-purifier.lock.json was accepted"
-    ++ lib.optional (!currentLock.success) "the current uv-purifier.lock.json was refused";
+    ++ lib.filter (name: !lockCases.${name}) (lib.attrNames lockCases);
 in
 pkgs.runCommand "uv-purifier-test-nix-library" { } (
   if failures == [ ] then

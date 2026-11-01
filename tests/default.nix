@@ -191,7 +191,10 @@ in
     conformance-malformed
     ;
 
-  nix-library = import ./nix-library.nix { inherit pkgs purifier; };
+  nix-library = import ./nix-library.nix {
+    inherit pkgs purifier;
+    inherit (lib'.uv-purifier) readLock;
+  };
 
   flask = import ./real-world/flask {
     inherit pkgs cli;
