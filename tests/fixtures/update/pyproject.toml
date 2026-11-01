@@ -1,0 +1,12 @@
+# A project whose uv.lock pins six at an old version, 1.15.0, that its
+# requirement allows above. `uv-purifier lock` keeps that pin;
+# `uv-purifier update` moves it (the conformance-update job of CI).
+[project]
+name = "update"
+version = "0.1.0"
+requires-python = ">=3.12"
+dependencies = ["six>=1.15"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

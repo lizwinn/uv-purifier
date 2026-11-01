@@ -538,22 +538,42 @@ def previous_resolution(lockfile):
         return None
 
 
+def update(root, lockfile, packages):
+    """Updates both lockfiles: `uv lock --upgrade`, or with package names
+    `uv lock --upgrade-package` for each, and then the purifier lockfile
+    against the result, with its build requirements resolved anew."""
+    args = ["lock"]
+    if packages:
+        for package in packages:
+            args += ["--upgrade-package", package]
+    else:
+        args.append("--upgrade")
+    log(f"running `uv {' '.join(args)}`")
+    result = subprocess.run(["uv", *args], cwd=root, check=False)
+    if result.returncode != 0:
+        raise Error(f"`uv {' '.join(args)}` failed")
+    lock(root, lockfile, upgrade=True)
+
+
 def lock(root, lockfile, upgrade=False):
+    """Writes the purifier lockfile. uv.lock keeps its resolution: `uv lock`
+    runs only to write it where it is missing or does not match
+    pyproject.toml, which changes no version it can keep. With `upgrade`,
+    as `update` runs it, the build requirements resolve anew; without it,
+    as of the time the lockfile it replaces records."""
     global EXCLUDE_NEWER
     uv_lock_path = os.path.join(root, "uv.lock")
-    if not os.path.exists(uv_lock_path):
-        raise Error(f"{root} has no uv.lock; run `uv lock` first")
     check = run_uv(["lock", "--check", "--quiet"], cwd=root)
-    if check.returncode != 0:
-        raise Error(
-            "uv.lock does not match pyproject.toml; run `uv lock`, then `uv-purifier lock`\n"
-            + check.stderr.strip()
-        )
+    if not os.path.exists(uv_lock_path) or check.returncode != 0:
+        log("uv.lock is missing or does not match pyproject.toml; running `uv lock`")
+        result = subprocess.run(["uv", "lock"], cwd=root, check=False)
+        if result.returncode != 0:
+            raise Error("`uv lock` failed")
     resolved_at = None if upgrade else previous_resolution(lockfile)
     if resolved_at is None:
         resolved_at = datetime.datetime.now(datetime.UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
     else:
-        log(f"resolving build requirements as of {resolved_at}, as the lockfile did (--upgrade resolves them anew)")
+        log(f"resolving build requirements as of {resolved_at}, as the lockfile did (`uv-purifier update` resolves them anew)")
     EXCLUDE_NEWER = resolved_at
     with open(uv_lock_path, "rb") as f:
         uv_lock = tomllib.load(f)
@@ -771,7 +791,7 @@ def check_lockfile(root, path):
     if lockfile.get("inputsHash") != inputs_hash(root, tree_dirs):
         raise Error(
             f"{path} was made for another uv.lock or pyproject.toml. "
-            "If pyproject.toml changed, run `uv lock`; then run `uv-purifier lock`"
+            "Run `uv-purifier lock`, which also runs `uv lock` when pyproject.toml changed"
         )
 
 
@@ -820,13 +840,19 @@ def editable_trees(root):
     return trees
 
 
-# Where `prefetch` keeps its garbage-collector root, in the project.
+# Where `prefetch` keeps its garbage-collector root, beside the purifier
+# lockfile.
 GC_ROOT = os.path.join(".uv-purifier", "prefetch")
+
+# The environment variable that names the purifier lockfile of an external
+# build, as `--lockfile` does.
+LOCKFILE_VARIABLE = "UV_PURIFIER_LOCKFILE"
 
 
 def prefetch(root, lockfile, inputs=None):
     """Realizes in the Nix store everything the locked development needs on
-    this system, kept alive by a garbage-collector root in the project, and
+    this system, kept alive by a garbage-collector root beside the purifier
+    lockfile, and
     installs the project's .venv from it offline: the dependencies with
     their hashes, the packages from git, URLs and local paths from their
     wheels, and the workspace members and editable path dependencies as
@@ -835,7 +861,7 @@ def prefetch(root, lockfile, inputs=None):
     if inputs is None:
         check_lockfile(root, lockfile)
         log("building the locked files with Nix")
-        inputs = nix_build(root, lockfile, out_link=os.path.join(root, GC_ROOT))
+        inputs = nix_build(root, lockfile, out_link=os.path.join(os.path.dirname(lockfile), GC_ROOT))
     # uv gets a cache of its own. With the user's cache, which holds index
     # data from earlier online runs, uv picks distributions from that index
     # data even with UV_NO_INDEX, and then fails offline to download them.
@@ -920,16 +946,21 @@ def main(argv=None):
         command_parser.add_argument("--project", default=".", help="the directory that holds uv.lock")
         command_parser.add_argument(
             "--lockfile",
-            help=f"the purifier lockfile, when it is kept outside the project (default: {LOCK_FILE} in the project)",
+            help=f"the purifier lockfile, when it is kept outside the project (default: ${LOCKFILE_VARIABLE}, "
+            f"or else {LOCK_FILE} in the project)",
         )
 
-    lock_parser = sub.add_parser("lock", help=f"write {LOCK_FILE} beside uv.lock")
-    common(lock_parser)
-    lock_parser.add_argument(
-        "--upgrade",
-        action="store_true",
-        help="resolve the build requirements anew; without it, a relock keeps the versions of the lockfile it replaces",
+    lock_parser = sub.add_parser(
+        "lock",
+        help=f"write {LOCK_FILE}, keeping uv.lock's resolution (`uv lock` runs only where uv.lock is missing or stale)",
     )
+    common(lock_parser)
+    update_parser = sub.add_parser(
+        "update",
+        help="update both lockfiles: `uv lock --upgrade` (or --upgrade-package for each package named), then the purifier lockfile",
+    )
+    common(update_parser)
+    update_parser.add_argument("packages", nargs="*", help="the packages to update (every package when none)")
     prefetch_parser = sub.add_parser(
         "prefetch",
         help="realize the locked files with a GC root and install the project's .venv from them, for offline work",
@@ -958,10 +989,13 @@ def main(argv=None):
     )
     args = parser.parse_args(argv)
     root = os.path.abspath(args.project)
-    lockfile = os.path.abspath(args.lockfile) if args.lockfile else os.path.join(root, LOCK_FILE)
+    named = args.lockfile or os.environ.get(LOCKFILE_VARIABLE)
+    lockfile = os.path.abspath(named) if named else os.path.join(root, LOCK_FILE)
     try:
         if args.command == "lock":
-            lock(root, lockfile, upgrade=args.upgrade)
+            lock(root, lockfile)
+        elif args.command == "update":
+            update(root, lockfile, args.packages)
         elif args.command == "prefetch":
             prefetch(root, lockfile, args.inputs)
         elif args.command == "publish":

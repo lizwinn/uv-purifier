@@ -101,7 +101,8 @@ uv run --no-sync pytest
 
 `prefetch` realizes in the Nix store everything development needs on this
 system, keeps it alive with a garbage-collector root at
-`.uv-purifier/prefetch` (add `.uv-purifier/` to `.gitignore`), and
+`.uv-purifier/prefetch` beside the purifier lockfile (add `.uv-purifier/`
+to `.gitignore`), and
 installs the project's `.venv` from it: the dependencies, including the
 default dependency groups, with their hashes; the packages from git, URLs
 and local paths from the wheels Nix built; and the workspace members and
@@ -109,19 +110,35 @@ editable path dependencies as editable installs. Run the project and its
 tests with `uv run --no-sync`, or with `.venv/bin/` directly. An edit to a
 member shows at once.
 
-To add or upgrade a dependency, use uv as usual, which needs the network,
-then relock and prefetch again:
+To add a dependency, add it with uv, which needs the network, then relock
+and prefetch again. `uv-purifier lock` keeps uv.lock's resolution: it runs
+`uv lock` only where uv.lock is missing or no longer matches
+pyproject.toml, which changes no version that uv can keep.
 
 ```zsh
-uv add requests            # or: uv lock --upgrade-package requests
+uv add requests
 nix run github:nix-purifiers/uv-purifier -- lock
 nix run github:nix-purifiers/uv-purifier -- prefetch
 ```
 
-A relock resolves the build requirements as of the time the lockfile
-records, so it keeps their versions and reproduces the lockfile byte for
-byte when nothing else changed. `uv-purifier lock --upgrade` resolves them
-anew.
+To upgrade dependencies, `uv-purifier update` updates both lockfiles in
+one run. It runs `uv lock --upgrade`, or `uv lock --upgrade-package` for
+each package it names, and then relocks the purifier lockfile with the
+build requirements resolved anew:
+
+```zsh
+nix run github:nix-purifiers/uv-purifier -- update            # every package
+nix run github:nix-purifiers/uv-purifier -- update requests   # only requests
+```
+
+A relock with `lock` resolves the build requirements as of the time the
+lockfile records, so it keeps their versions and reproduces the lockfile
+byte for byte when nothing else changed.
+
+Every command finds the purifier lockfile beside uv.lock, or at the path
+of `--lockfile <path>` or of the environment variable
+`UV_PURIFIER_LOCKFILE`. A dev shell of a packaging flake can set the
+variable to the path it passes as `lockFile`.
 
 `nix run github:nix-purifiers/uv-purifier -- publish -- --token "$TOKEN"`
 uploads the `release` that Nix built, with `uv publish`; arguments after
@@ -151,7 +168,7 @@ fixture to keep that so.
 
 | What happened | The error says | Fix |
 | --- | --- | --- |
-| uv.lock changed, or a dependency was added to pyproject.toml without `uv lock` | `uv-purifier.lock.json was made for another uv.lock or another pyproject.toml` | If pyproject.toml changed, run `uv lock`; then run `uv-purifier lock`. |
+| uv.lock changed, or a dependency was added to pyproject.toml without `uv lock` | `uv-purifier.lock.json was made for another uv.lock or another pyproject.toml` | `uv-purifier lock`, which also runs `uv lock` when pyproject.toml changed |
 | uv-purifier.lock.json was edited by hand or by a merge | `was changed after uv-purifier lock wrote it` | `uv-purifier lock` |
 | uv-purifier.lock.json is not valid JSON | `is not valid JSON` | `uv-purifier lock` |
 | uv-purifier.lock.json is missing | `does not exist` | `uv-purifier lock`, and commit the file |

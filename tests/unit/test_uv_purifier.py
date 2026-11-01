@@ -253,7 +253,7 @@ class CheckLockfile(unittest.TestCase):
             project = self.copy(d)
             with open(os.path.join(project, "uv.lock"), "a") as f:
                 f.write("# changed\n")
-            self.assert_fails(project, "run `uv lock`; then run `uv-purifier lock`")
+            self.assert_fails(project, "Run `uv-purifier lock`, which also runs `uv lock` when pyproject.toml changed")
 
     def test_an_edited_lockfile(self):
         with tempfile.TemporaryDirectory() as d:

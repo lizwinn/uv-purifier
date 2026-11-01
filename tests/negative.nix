@@ -27,7 +27,7 @@ let
       };
       dependency-added-without-uv-lock = {
         break = "sed -i 's/\"docopt==0.6.2\"/\"docopt==0.6.2\", \"six\"/' pyproject.toml";
-        expect = "If pyproject.toml changed, run `uv lock`; then run `uv-purifier lock`";
+        expect = "Run `uv-purifier lock`, which also runs `uv lock` when pyproject.toml changed";
       };
     };
     conformance-tampered = {

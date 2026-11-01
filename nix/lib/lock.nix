@@ -267,7 +267,7 @@ let
       ]
     else if purifier.inputsHash or null != inputsHash then
       [
-        "uv-purifier: ${toString lockFile} was made for another uv.lock or another pyproject.toml of a source tree in the project. If pyproject.toml changed, run `uv lock`; then run `uv-purifier lock`."
+        "uv-purifier: ${toString lockFile} was made for another uv.lock or another pyproject.toml of a source tree in the project. Run `uv-purifier lock`, which also runs `uv lock` when pyproject.toml changed."
       ]
     else
       [ ];

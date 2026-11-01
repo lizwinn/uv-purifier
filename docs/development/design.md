@@ -11,7 +11,13 @@ Nix library reads uv.lock with `builtins.fromTOML` (`nix/lib/lock.nix`).
 
 uv.lock does not pin build requirements, which uv's build isolation
 resolves at build time. `uv-purifier lock` (`src/uv_purifier.py`) fills that
-gap. It visits every package the build may have to build:
+gap. It keeps the resolution of uv.lock: it runs `uv lock` only when
+`uv lock --check` fails, which happens where uv.lock is missing or no
+longer matches pyproject.toml, and `uv lock` changes no version it can
+keep. `uv-purifier update` runs `uv lock --upgrade`, or
+`uv lock --upgrade-package` for each package named, and then `lock` with
+the build requirements resolved anew. `lock` then visits every package the
+build may have to build:
 
 - every workspace member with a build;
 - every package from git, a URL or a local path that is not a wheel;
@@ -136,7 +142,7 @@ ignores `--find-links`. The cache's layout is internal to uv.
 ## Developing offline
 
 `uv-purifier prefetch` builds the `interactive` output of `buildUvProject`,
-with a garbage-collector root at `.uv-purifier/prefetch` in the project,
+with a garbage-collector root at `.uv-purifier/prefetch` beside the purifier lockfile,
 (the Python, the wheelhouse, and the wheels from git, URLs and local paths
 with their index for `split_requirements.py`) and installs the project's
 `.venv` from it the same way, with the default dependency groups, using
