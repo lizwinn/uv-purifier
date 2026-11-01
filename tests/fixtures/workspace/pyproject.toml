@@ -1,0 +1,16 @@
+# A virtual workspace root: it has no build of its own, and its members are
+# the packages.
+[project]
+name = "workspace"
+version = "0"
+requires-python = ">=3.12"
+dependencies = ["app"]
+
+[tool.uv]
+package = false
+
+[tool.uv.workspace]
+members = ["packages/*"]
+
+[tool.uv.sources]
+app = { workspace = true }
