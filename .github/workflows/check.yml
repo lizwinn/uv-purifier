@@ -2,6 +2,9 @@
 #
 # Runs every check of the flake on each system it supports, on a runner of
 # that system: `nix flake check` builds the checks of the system it runs on.
+# The relock job relocks every fixture with the network and fails when a
+# lockfile differs from the committed one: a relock reproduces its
+# lockfile byte for byte.
 name: check
 
 on:
@@ -20,3 +23,15 @@ jobs:
       - uses: actions/checkout@v5
       - uses: cachix/install-nix-action@v31
       - run: nix flake check -L
+
+  relock:
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: [ubuntu-latest, ubuntu-24.04-arm]
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: cachix/install-nix-action@v31
+      - run: tests/relock-fixtures.sh
+      - run: git diff --exit-code

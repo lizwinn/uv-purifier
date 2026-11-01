@@ -1,6 +1,7 @@
 {
   "version": 1,
   "inputsHash": "6eeb593da0298b3f68282aafcc11633149a9230153750bfaa0a718dc0569a181",
+  "resolvedAt": "2026-11-01T09:21:00Z",
   "artifacts": [
     {
       "path": "flit_core-3.12.0-py3-none-any.whl",
@@ -77,5 +78,6 @@
       "wheel": "greeting-1.0.0-py3-none-any.whl",
       "scripts": []
     }
-  }
+  },
+  "contentHash": "e0116a650142ff585a5f7d221bc74097bd4d6e97c36c00f27b1c1e6b5a037b44"
 }

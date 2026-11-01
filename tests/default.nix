@@ -91,7 +91,7 @@ in
 
   sources =
     runs "sources" sources.environments.sources "sources"
-      "attrs=25.3.0 six=1.17.0 localdir 0.3.0 localsdist 0.4.0 localwheel 0.5.0";
+      "attrs=25.3.0 six=1.17.0 idna=3.10 localdir 0.3.0 localsdist 0.4.0 localwheel 0.5.0";
 
   outside =
     runs "outside" outside.environments.outside-app "outside-app"
@@ -104,9 +104,9 @@ in
 
   sync-sources =
     syncs "sources" ./fixtures/sources sources "sources"
-      "attrs=25.3.0 six=1.17.0 localdir 0.3.0 localsdist 0.4.0 localwheel 0.5.0"
+      "attrs=25.3.0 six=1.17.0 idna=3.10 localdir 0.3.0 localsdist 0.4.0 localwheel 0.5.0"
       "sed -i 's/attrs=/attrs: /' src/sources/__init__.py"
-      "attrs: 25.3.0 six=1.17.0 localdir 0.3.0 localsdist 0.4.0 localwheel 0.5.0";
+      "attrs: 25.3.0 six=1.17.0 idna=3.10 localdir 0.3.0 localsdist 0.4.0 localwheel 0.5.0";
 
   # A member's package is what `uv build` makes: its sdist and its wheel.
   workspace-package = runCommand "uv-purifier-test-workspace-package" { } ''
@@ -117,6 +117,28 @@ in
   '';
 
   nix-library = import ./nix-library.nix { inherit pkgs; };
+
+  negative = import ./negative.nix { inherit pkgs; };
+
+  # The unit tests of the lock tool and of split_requirements.py.
+  unit =
+    runCommand "uv-purifier-test-unit"
+      {
+        src = lib.fileset.toSource {
+          root = ../.;
+          fileset = lib.fileset.unions [
+            ../src
+            ../nix/lib
+            ./unit
+          ];
+        };
+        nativeBuildInputs = [ pkgs.python3 ];
+      }
+      ''
+        cd $src
+        python3 -m unittest discover -s tests/unit -v
+        touch $out
+      '';
 
   # The outputs of a project are known by name when Nix evaluates, from
   # uv-purifier.lock.json: reading their names builds nothing.

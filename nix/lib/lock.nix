@@ -31,7 +31,17 @@ let
 
   supportedVersion = import ./lock-version.nix;
 
-  purifier = fromJSON (readFile lockFile);
+  purifier =
+    if !builtins.pathExists lockFile then
+      throw "uv-purifier: ${toString lockFile} does not exist. Run `uv-purifier lock` beside uv.lock, and add the file to the repository."
+    else
+      builtins.addErrorContext "while reading ${toString lockFile}, which is not valid JSON; if it was edited by hand or merged with conflicts, rewrite it with `uv-purifier lock`" (
+        fromJSON (readFile lockFile)
+      );
+
+  # The hash of every field but contentHash, over the JSON builtins.toJSON
+  # writes (src/uv_purifier.py, content_hash).
+  contentHash = hashString "sha256" (builtins.toJSON (removeAttrs purifier [ "contentHash" ]));
   uvLock = fromTOML (readFile uvLockFile);
 
   packageKey = package: "${package.name}==${package.version or ""}";
@@ -235,8 +245,11 @@ assert
   purifier.version == supportedVersion
   || throw "uv-purifier: ${toString lockFile} has lock format version ${toString purifier.version}; this library reads version ${toString supportedVersion}. Run `uv-purifier lock` with the version that provides this library.";
 assert
+  purifier.contentHash or null == contentHash
+  || throw "uv-purifier: ${toString lockFile} was changed after `uv-purifier lock` wrote it, by hand or by a merge. Rewrite it with `uv-purifier lock`.";
+assert
   purifier.inputsHash == inputsHash
-  || throw "uv-purifier: ${toString lockFile} does not match uv.lock and the pyproject.toml files of the workspace members. Run `uv-purifier lock`.";
+  || throw "uv-purifier: ${toString lockFile} was made for another uv.lock or another pyproject.toml of a source tree in the project. If pyproject.toml changed, run `uv lock`; then run `uv-purifier lock`.";
 {
   inherit
     purifier

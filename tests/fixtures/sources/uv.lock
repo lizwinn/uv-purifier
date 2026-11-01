@@ -8,6 +8,23 @@ version = "25.3.0"
 source = { git = "https://github.com/python-attrs/attrs?tag=25.3.0#3dca08ce5bbe673d7df25f44f3dda92505d1043d" }
 
 [[package]]
+name = "idna"
+version = "3.10"
+source = { url = "https://files.pythonhosted.org/packages/76/c6/c88e154df9c4e1a2a66ccf0005a88dfb2650c1dffb6f5ce603dfbd452ce3/idna-3.10-py3-none-any.whl" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/76/c6/c88e154df9c4e1a2a66ccf0005a88dfb2650c1dffb6f5ce603dfbd452ce3/idna-3.10-py3-none-any.whl", hash = "sha256:946d195a0d259cbba61165e88e65941f16e9b36ea6ddb97f00452bae8b1287d3" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "flake8", marker = "extra == 'all'", specifier = ">=7.1.1" },
+    { name = "mypy", marker = "extra == 'all'", specifier = ">=1.11.2" },
+    { name = "pytest", marker = "extra == 'all'", specifier = ">=8.3.2" },
+    { name = "ruff", marker = "extra == 'all'", specifier = ">=0.6.2" },
+]
+provides-extras = ["all"]
+
+[[package]]
 name = "localdir"
 version = "0.3.0"
 source = { directory = "vendor/localdir" }
@@ -38,6 +55,7 @@ version = "0.1.0"
 source = { editable = "." }
 dependencies = [
     { name = "attrs" },
+    { name = "idna" },
     { name = "localdir" },
     { name = "localsdist" },
     { name = "localwheel" },
@@ -47,6 +65,7 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "attrs", git = "https://github.com/python-attrs/attrs?tag=25.3.0" },
+    { name = "idna", url = "https://files.pythonhosted.org/packages/76/c6/c88e154df9c4e1a2a66ccf0005a88dfb2650c1dffb6f5ce603dfbd452ce3/idna-3.10-py3-none-any.whl" },
     { name = "localdir", directory = "vendor/localdir" },
     { name = "localsdist", path = "vendor/localsdist-0.4.0.tar.gz" },
     { name = "localwheel", path = "vendor/localwheel-0.5.0-py3-none-any.whl" },

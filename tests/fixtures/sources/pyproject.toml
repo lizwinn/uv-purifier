@@ -6,10 +6,11 @@ requires-python = ">=3.12"
 # - attrs from git, at a tag. It builds with hatch-vcs, which reads its
 #   version from git.
 # - six from a URL, a GitHub archive whose file name is not an sdist name.
+# - idna from a URL of a wheel.
 # - localdir from a local directory.
 # - localsdist from a local sdist file.
 # - localwheel from a local wheel file.
-dependencies = ["attrs", "six", "localdir", "localsdist", "localwheel"]
+dependencies = ["attrs", "six", "idna", "localdir", "localsdist", "localwheel"]
 
 [project.scripts]
 sources = "sources:main"
@@ -17,6 +18,7 @@ sources = "sources:main"
 [tool.uv.sources]
 attrs = { git = "https://github.com/python-attrs/attrs", tag = "25.3.0" }
 six = { url = "https://github.com/benjaminp/six/archive/refs/tags/1.17.0.tar.gz" }
+idna = { url = "https://files.pythonhosted.org/packages/76/c6/c88e154df9c4e1a2a66ccf0005a88dfb2650c1dffb6f5ce603dfbd452ce3/idna-3.10-py3-none-any.whl" }
 localdir = { path = "vendor/localdir" }
 localsdist = { path = "vendor/localsdist-0.4.0.tar.gz" }
 localwheel = { path = "vendor/localwheel-0.5.0-py3-none-any.whl" }

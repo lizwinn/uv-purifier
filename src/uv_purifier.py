@@ -12,6 +12,7 @@ those with uv itself and writes them to uv-purifier.lock.json beside uv.lock.
 import argparse
 import base64
 import configparser
+import datetime
 import hashlib
 import io
 import json
@@ -218,7 +219,7 @@ def dynamic_requires(tree, pyproject, static, workdir):
     backend_path = [os.path.join(tree, p) for p in build_system.get("backend-path", [])]
     venv = tempfile.mkdtemp(dir=workdir)
     for args in (["venv", "--quiet", venv], ["pip", "install", "--quiet", "--python", venv, *static]):
-        result = run_uv(args, cwd=tree)
+        result = run_uv(args, cwd=tree, env=resolution_env())
         if result.returncode != 0:
             raise Error(f"installing the build requirements {', '.join(static)} failed:\n{result.stderr.strip()}")
     result = subprocess.run(
@@ -315,6 +316,18 @@ def sdist_pyproject(path):
     return tomllib.load(io.BytesIO(candidates[min(candidates)]))
 
 
+# The time the build requirements are resolved as of. The lock run sets it
+# from the lockfile it replaces, so a relock picks the same versions; a
+# relock with --upgrade sets it to now.
+EXCLUDE_NEWER = None
+
+
+def resolution_env():
+    """The environment of uv when it resolves build requirements: no
+    distribution uploaded after EXCLUDE_NEWER counts."""
+    return dict(os.environ, UV_EXCLUDE_NEWER=EXCLUDE_NEWER) if EXCLUDE_NEWER else None
+
+
 def run_uv(args, cwd, env=None):
     result = subprocess.run(
         ["uv", *args], cwd=cwd, env=env, text=True, capture_output=True, check=False
@@ -340,7 +353,7 @@ def resolve_build_requirements(requires, requires_python, index_config, workdir)
         f.write("\n".join(lines) + "\n")
         for key, value in index_config.items():
             f.write(toml_assignment(key, value))
-    result = run_uv(["lock", "--quiet"], cwd=project)
+    result = run_uv(["lock", "--quiet"], cwd=project, env=resolution_env())
     if result.returncode != 0:
         raise Error(result.stderr.strip())
     with open(os.path.join(project, "uv.lock"), "rb") as f:
@@ -441,19 +454,47 @@ def inputs_hash(root, tree_dirs):
     return hashlib.sha256(text.encode()).hexdigest()
 
 
+def content_hash(lockfile):
+    """The hash of every field of a lockfile but `contentHash`, over the
+    JSON that Nix's builtins.toJSON writes for the same value: keys sorted,
+    no spaces. The Nix library refuses a lockfile whose fields no longer
+    match it, which is a lockfile edited by hand."""
+    fields = {k: v for k, v in lockfile.items() if k != "contentHash"}
+    text = json.dumps(fields, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+    return hashlib.sha256(text.encode()).hexdigest()
+
+
 def inside_project(path):
     return not (path == ".." or path.startswith(("/", "../")))
 
 
-def lock(root):
+def previous_resolution(root):
+    """The time the build requirements of the existing lockfile were
+    resolved as of, or None when there is no lockfile to keep."""
+    try:
+        with open(os.path.join(root, LOCK_FILE)) as f:
+            return json.load(f).get("resolvedAt")
+    except (OSError, ValueError):
+        return None
+
+
+def lock(root, upgrade=False):
+    global EXCLUDE_NEWER
     uv_lock_path = os.path.join(root, "uv.lock")
     if not os.path.exists(uv_lock_path):
         raise Error(f"{root} has no uv.lock; run `uv lock` first")
     check = run_uv(["lock", "--check", "--quiet"], cwd=root)
     if check.returncode != 0:
         raise Error(
-            "uv.lock does not match the project; run `uv lock` first\n" + check.stderr.strip()
+            "uv.lock does not match pyproject.toml; run `uv lock`, then `uv-purifier lock`\n"
+            + check.stderr.strip()
         )
+    resolved_at = None if upgrade else previous_resolution(root)
+    if resolved_at is None:
+        resolved_at = datetime.datetime.now(datetime.UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
+    else:
+        log(f"resolving build requirements as of {resolved_at}, as the lockfile did (--upgrade resolves them anew)")
+    EXCLUDE_NEWER = resolved_at
     with open(uv_lock_path, "rb") as f:
         uv_lock = tomllib.load(f)
     with open(os.path.join(root, "pyproject.toml"), "rb") as f:
@@ -593,12 +634,14 @@ def lock(root):
     result = {
         "version": FORMAT_VERSION,
         "inputsHash": inputs_hash(root, tree_dirs),
+        "resolvedAt": resolved_at,
         "artifacts": [artifacts[k] for k in sorted(artifacts)],
         "buildRequirements": requirement_sets,
         "builds": dict(sorted(builds.items())),
         "sources": dict(sorted(sources.items())),
         "outputs": dict(sorted(outputs.items())),
     }
+    result["contentHash"] = content_hash(result)
     with open(os.path.join(root, LOCK_FILE), "w") as f:
         json.dump(result, f, indent=2)
         f.write("\n")
@@ -734,6 +777,11 @@ def main(argv=None):
     sub = parser.add_subparsers(dest="command", required=True)
     lock_parser = sub.add_parser("lock", help=f"write {LOCK_FILE} beside uv.lock")
     lock_parser.add_argument("--project", default=".", help="the directory that holds uv.lock")
+    lock_parser.add_argument(
+        "--upgrade",
+        action="store_true",
+        help="resolve the build requirements anew; without it, a relock keeps the versions of the lockfile it replaces",
+    )
     publish_parser = sub.add_parser(
         "publish",
         help="build workspace members with Nix and upload what Nix built with `uv publish`",
@@ -763,7 +811,7 @@ def main(argv=None):
     args = parser.parse_args(argv)
     try:
         if args.command == "lock":
-            lock(os.path.abspath(args.project))
+            lock(os.path.abspath(args.project), upgrade=args.upgrade)
         elif args.command == "sync":
             sync(os.path.abspath(args.project), args.inputs)
         elif args.command == "publish":

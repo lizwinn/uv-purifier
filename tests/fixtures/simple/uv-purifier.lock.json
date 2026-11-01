@@ -1,6 +1,7 @@
 {
   "version": 1,
   "inputsHash": "bcf495420bf663e5bd5fbd28e16ec2b6803dcd0e9e2dce5c76ce11b95f568fa2",
+  "resolvedAt": "2026-11-01T09:20:54Z",
   "artifacts": [
     {
       "path": "editables-0.6-py3-none-any.whl",
@@ -209,5 +210,6 @@
         "simple"
       ]
     }
-  }
+  },
+  "contentHash": "8c094b4d5b2ca1b7ae6fed98ef34319137bf5f2beb6987cd21cfce1bb0fd7134"
 }
