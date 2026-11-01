@@ -20,7 +20,11 @@ From the directory that holds uv.lock:
 nix run github:nix-purifiers/uv-purifier -- lock
 ```
 
-Commit `uv-purifier.lock.json`. The flake's overlay, `overlays.default`,
+Commit both lockfiles, uv.lock and `uv-purifier.lock.json`, to the
+project's repository. We recommend this setup, and the builder and the
+commands look for both lockfiles there by default.
+
+The flake's overlay, `overlays.default`,
 adds the builder `buildUvProject` to the package set, beside the builders
 of nixpkgs. A package written for `callPackage` takes it by name:
 
@@ -86,17 +90,23 @@ defines are included.
   such as `fetchers.fetchurl` for a company mirror or credentials.
 - `python` (default `python3` of the package set), which must satisfy the project's
   `requires-python`.
-- `lockFile` (default `src + "/uv-purifier.lock.json"`). A file given
-  outside `src` replaces any copy in it, so a packaging flake can build a
-  project its author does not change, with the purifier lockfile kept
-  beside the packaging; uv.lock stays in the project. Every command takes
-  `--lockfile <path>` for the same purpose.
+- `lockFile` (default `src + "/uv-purifier.lock.json"`), the purifier
+  lockfile. A file given outside `src` replaces any copy in it.
+- `uvLock` (default `src + "/uv.lock"`). A file given outside `src`
+  replaces the copy in it.
+
+`lockFile` and `uvLock` serve an external build, in which a packaging
+flake builds a project that it does not change. The packaging flake keeps
+the purifier lockfile beside itself. When the committed uv.lock of the
+project is missing or stale, the packaging flake can keep its own uv.lock
+too. The commands take the same paths through `--lockfile` and
+`--tool-lockfile`, as the Development loop section describes.
 - `pathSources`, the local packages that uv.lock names by a path outside
   `src`, such as `pathSources."../shared" = ../shared;`. A flake's source
   tree cannot reach outside itself. A path inside `src` needs no entry.
 - `testCommand`, the command of `tests`.
 
-`lib.uv-purifier.readLock { src, lockFile ? ... }` reads uv.lock and the
+`lib.uv-purifier.readLock { src, lockFile ? ..., uvLock ? ... }` reads uv.lock and the
 purifier lockfile into the lock in memory of the purifier contract,
 `{ purifier, entries, outputs, problems }`, which tools that read every
 purifier, such as an SBOM generator, read in one shape. A compiled wheel's
@@ -156,10 +166,15 @@ A relock with `lock` resolves the build requirements as of the time the
 lockfile records, so it keeps their versions and reproduces the lockfile
 byte for byte when nothing else changed.
 
-Every command finds the purifier lockfile beside uv.lock, or at the path
-of `--lockfile <path>` or of the environment variable
-`UV_PURIFIER_LOCKFILE`. A dev shell of a packaging flake can set the
-variable to the path it passes as `lockFile`.
+Every command finds both lockfiles in the project by default. For an
+external build, `--lockfile <path>` or the environment variable
+`UV_PURIFIER_LOCKFILE` names the purifier lockfile. `--tool-lockfile
+<path>` or `UV_PURIFIER_TOOL_LOCKFILE` names a uv.lock outside the
+project. With a uv.lock outside the project, `lock` and `update` write
+uv.lock to that path and leave the uv.lock of the project as it is. When
+that path has no file yet, `lock` starts from the uv.lock of the project.
+A dev shell of a packaging flake can set both variables to the paths it
+passes as `lockFile` and `uvLock`.
 
 `nix run github:nix-purifiers/uv-purifier -- publish -- --token "$TOKEN"`
 uploads the `release` that Nix built, with `uv publish`; arguments after
@@ -241,9 +256,13 @@ nix run github:nix-purifiers/uv-purifier -- prefetch
 uv run --no-sync pytest
 ```
 
-A packaging flake can build Flask without changing its repository. It
-keeps `uv-purifier.lock.json` beside the flake and passes it as
-`lockFile`:
+Commit `uv-purifier.lock.json` beside uv.lock in the Flask repository. A
+flake in the repository, like the one in the Quickstart, then builds
+Flask with `(pkgs.buildUvProject { src = ./.; }).packages.flask`.
+
+A packaging flake outside the repository can also build Flask, without
+changing its repository. It keeps `uv-purifier.lock.json` beside the
+flake and passes it as `lockFile`:
 
 ```nix
 {

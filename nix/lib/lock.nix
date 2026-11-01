@@ -9,6 +9,8 @@
   # The project root, which holds uv.lock and pyproject.toml.
   src,
   lockFile ? src + "/uv-purifier.lock.json",
+  # uv.lock. A copy outside `src` takes the place of the one in it.
+  uvLock ? src + "/uv.lock",
 }:
 let
   inherit (builtins)
@@ -33,7 +35,6 @@ let
 
   supportedVersion = import ./lock-version.nix;
 
-  uvLockFile = src + "/uv.lock";
   exists = builtins.pathExists lockFile;
 
   # A JSON file that does not parse fails evaluation here: builtins.fromJSON
@@ -50,7 +51,7 @@ let
   # The hash of every field but contentHash, over the JSON builtins.toJSON
   # writes (src/uv_purifier.py, content_hash).
   contentHash = hashString "sha256" (builtins.toJSON (removeAttrs purifier [ "contentHash" ]));
-  uvLock = fromTOML (readFile uvLockFile);
+  uvLockData = fromTOML (readFile uvLock);
 
   packageKey = package: "${package.name}==${package.version or ""}";
 
@@ -129,15 +130,15 @@ let
       "virtual"
     ];
 
-  packages = uvLock.package or [ ];
+  packages = uvLockData.package or [ ];
 
   # A workspace lists its members in [manifest]; a single project is its own
   # member, the source tree at the project root (src/uv_purifier.py,
   # workspace_members).
   isMember =
     package:
-    if uvLock ? manifest.members then
-      builtins.elem package.name uvLock.manifest.members
+    if uvLockData ? manifest.members then
+      builtins.elem package.name uvLockData.manifest.members
     else
       isTree package && (sourceOf package).value == ".";
 
@@ -245,7 +246,7 @@ let
     )
   );
   inputsHash = hashString "sha256" (
-    "uv.lock ${hashFile "sha256" uvLockFile}\n"
+    "uv.lock ${hashFile "sha256" uvLock}\n"
     + concatStringsSep "" (map (f: "${f} ${hashFile "sha256" (src + "/${f}")}\n") treeFiles)
   );
   # Why the lockfiles cannot be used, the first that applies, naming the
@@ -276,7 +277,7 @@ in
   inherit
     purifier
     problems
-    uvLock
+    uvLockData
     members
     distributions
     direct

@@ -12,6 +12,7 @@ those with uv itself and writes them to uv-purifier.lock.json beside uv.lock.
 import argparse
 import base64
 import configparser
+import contextlib
 import datetime
 import hashlib
 import io
@@ -848,6 +849,45 @@ GC_ROOT = os.path.join(".uv-purifier", "prefetch")
 # build, as `--lockfile` does.
 LOCKFILE_VARIABLE = "UV_PURIFIER_LOCKFILE"
 
+# The environment variable that names a uv.lock kept outside the project,
+# as `--tool-lockfile` does.
+TOOL_LOCKFILE_VARIABLE = "UV_PURIFIER_TOOL_LOCKFILE"
+
+
+@contextlib.contextmanager
+def tool_lockfile(root, outside, writes):
+    """Runs a command with the uv.lock at `outside` in the project, since uv
+    reads and writes uv.lock only there. The project's own uv.lock waits in
+    .uv-purifier/ and is put back afterwards, even when the command fails.
+    With `writes`, as for `lock` and `update`, the uv.lock the command left
+    is copied to `outside` first; when `outside` does not exist yet, the
+    command starts from the project's uv.lock."""
+    if outside is None:
+        yield
+        return
+    in_tree = os.path.join(root, "uv.lock")
+    if not os.path.exists(outside) and not writes:
+        raise Error(f"{outside} does not exist; run `uv-purifier lock --tool-lockfile {outside}`")
+    saved = os.path.join(root, ".uv-purifier", "uv.lock.project")
+    os.makedirs(os.path.dirname(saved), exist_ok=True)
+    had_tree_copy = os.path.exists(in_tree)
+    if had_tree_copy:
+        shutil.copyfile(in_tree, saved)
+    try:
+        if os.path.exists(outside):
+            shutil.copyfile(outside, in_tree)
+        yield
+        if writes and os.path.exists(in_tree):
+            os.makedirs(os.path.dirname(outside), exist_ok=True)
+            shutil.copyfile(in_tree, outside)
+            log(f"wrote {outside}")
+    finally:
+        if had_tree_copy:
+            shutil.copyfile(saved, in_tree)
+            os.remove(saved)
+        elif os.path.exists(in_tree):
+            os.remove(in_tree)
+
 
 def prefetch(root, lockfile, inputs=None):
     """Realizes in the Nix store everything the locked development needs on
@@ -949,6 +989,11 @@ def main(argv=None):
             help=f"the purifier lockfile, when it is kept outside the project (default: ${LOCKFILE_VARIABLE}, "
             f"or else {LOCK_FILE} in the project)",
         )
+        command_parser.add_argument(
+            "--tool-lockfile",
+            help=f"a uv.lock kept outside the project, used in place of the project's own (default: ${TOOL_LOCKFILE_VARIABLE}); "
+            "lock and update write it there and leave the project's uv.lock as it is",
+        )
 
     lock_parser = sub.add_parser(
         "lock",
@@ -991,18 +1036,21 @@ def main(argv=None):
     root = os.path.abspath(args.project)
     named = args.lockfile or os.environ.get(LOCKFILE_VARIABLE)
     lockfile = os.path.abspath(named) if named else os.path.join(root, LOCK_FILE)
+    named_tool = args.tool_lockfile or os.environ.get(TOOL_LOCKFILE_VARIABLE)
+    outside = os.path.abspath(named_tool) if named_tool else None
     try:
-        if args.command == "lock":
-            lock(root, lockfile)
-        elif args.command == "update":
-            update(root, lockfile, args.packages)
-        elif args.command == "prefetch":
-            prefetch(root, lockfile, args.inputs)
-        elif args.command == "publish":
-            extra = args.uv_publish_args
-            if extra and extra[0] == "--":
-                extra = extra[1:]
-            publish(root, lockfile, args.package, extra)
+        with tool_lockfile(root, outside, writes=args.command in ("lock", "update")):
+            if args.command == "lock":
+                lock(root, lockfile)
+            elif args.command == "update":
+                update(root, lockfile, args.packages)
+            elif args.command == "prefetch":
+                prefetch(root, lockfile, args.inputs)
+            elif args.command == "publish":
+                extra = args.uv_publish_args
+                if extra and extra[0] == "--":
+                    extra = extra[1:]
+                publish(root, lockfile, args.package, extra)
     except Error as e:
         log(str(e))
         return 1

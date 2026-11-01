@@ -301,6 +301,50 @@ typing-extensions==4.15.0 ; python_full_version < '3.13' \\
 """
 
 
+class ToolLockfile(unittest.TestCase):
+    """A uv.lock kept outside the project, through --tool-lockfile."""
+
+    def setUp(self):
+        self.dir = tempfile.TemporaryDirectory()
+        self.root = os.path.join(self.dir.name, "project")
+        os.makedirs(self.root)
+        self.in_tree = os.path.join(self.root, "uv.lock")
+        self.outside = os.path.join(self.dir.name, "packaging", "uv.lock")
+        pathlib.Path(self.in_tree).write_text("project\n")
+
+    def tearDown(self):
+        self.dir.cleanup()
+
+    def test_a_write_starts_from_the_project_and_leaves_it(self):
+        with uvp.tool_lockfile(self.root, self.outside, writes=True):
+            self.assertEqual(pathlib.Path(self.in_tree).read_text(), "project\n")
+            pathlib.Path(self.in_tree).write_text("locked\n")
+        self.assertEqual(pathlib.Path(self.outside).read_text(), "locked\n")
+        self.assertEqual(pathlib.Path(self.in_tree).read_text(), "project\n")
+
+    def test_a_read_uses_the_outside_copy(self):
+        os.makedirs(os.path.dirname(self.outside))
+        pathlib.Path(self.outside).write_text("outside\n")
+        with uvp.tool_lockfile(self.root, self.outside, writes=False):
+            self.assertEqual(pathlib.Path(self.in_tree).read_text(), "outside\n")
+        self.assertEqual(pathlib.Path(self.in_tree).read_text(), "project\n")
+
+    def test_a_failed_command_restores_the_project(self):
+        with self.assertRaises(uvp.Error), uvp.tool_lockfile(self.root, self.outside, writes=True):
+            pathlib.Path(self.in_tree).write_text("half written\n")
+            raise uvp.Error("lock failed")
+        self.assertEqual(pathlib.Path(self.in_tree).read_text(), "project\n")
+        self.assertFalse(os.path.exists(self.outside))
+
+    def test_a_read_needs_the_outside_copy(self):
+        with (
+            self.assertRaises(uvp.Error) as raised,
+            uvp.tool_lockfile(self.root, self.outside, writes=False),
+        ):
+            pass
+        self.assertIn("uv-purifier lock --tool-lockfile", str(raised.exception))
+
+
 class SplitRequirements(unittest.TestCase):
     def run_split(self, direct):
         with tempfile.TemporaryDirectory() as d:

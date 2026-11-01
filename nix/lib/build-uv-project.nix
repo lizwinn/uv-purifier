@@ -65,6 +65,9 @@
   # The purifier lockfile. A file outside `src` replaces any copy in it,
   # so a packaging flake can build a project its author does not change.
   lockFile ? src + "/uv-purifier.lock.json",
+  # uv.lock. A file outside `src` replaces the copy in it, so a packaging
+  # flake can build a project whose committed uv.lock is missing or stale.
+  uvLock ? src + "/uv.lock",
   # The local packages that uv.lock names by a path outside `src`, such as
   # "../shared", each mapped to a Nix path that holds it. A path inside
   # `src` is read from `src`.
@@ -85,11 +88,13 @@ let
 
   # The lock in memory of the purifier contract, checked: evaluation fails
   # here with the problems of a stale, edited or incomplete lockfile.
-  locked = purifier.checkLock (import ./read-lock.nix { inherit lib; } { inherit src lockFile; });
+  locked = purifier.checkLock (
+    import ./read-lock.nix { inherit lib; } { inherit src lockFile uvLock; }
+  );
 
   # The details of the lockfiles that the builds need beyond the lock in
   # memory: which packages build, and with which build requirements.
-  lock = import ./lock.nix { inherit src lockFile; };
+  lock = import ./lock.nix { inherit src lockFile uvLock; };
 
   # The downloads of this system, by file name.
   systemFiles = listToAttrs (
@@ -100,32 +105,30 @@ let
   );
 
   # The source the builds run in: `src` itself, or a copy of it with the
-  # lockfile given outside it.
+  # lockfiles given outside it.
   buildSrc =
-    if lockFile == src + "/uv-purifier.lock.json" then
+    if lockFile == src + "/uv-purifier.lock.json" && uvLock == src + "/uv.lock" then
       src
     else
       runCommand "${baseNameOf (toString src)}-locked" { } ''
         cp -r ${src} $out
         chmod -R u+w $out
         cp ${lockFile} $out/uv-purifier.lock.json
+        cp ${uvLock} $out/uv.lock
       '';
 
-  # The fetchers of the shared library read their tools from a package set.
-  # uv.lock records only files and git checkouts, so this set holds the
-  # packages those fetches use.
+  # The fetchers of the shared library and the packages that the steps
+  # after a fetch build with.
   fetchArgs = {
-    pkgs = {
-      inherit
-        fetchurl
-        fetchgit
-        runCommand
-        writeText
-        unzip
-        zstd
-        python3
-        ;
-    };
+    inherit
+      fetchurl
+      fetchgit
+      runCommand
+      writeText
+      unzip
+      zstd
+      python3
+      ;
   }
   // fetchers;
   fetch = purifier.fetchEntry fetchArgs;

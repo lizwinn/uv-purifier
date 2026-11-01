@@ -30,9 +30,11 @@
 {
   src,
   lockFile ? src + "/uv-purifier.lock.json",
+  # uv.lock. A copy outside `src` takes the place of the one in it.
+  uvLock ? src + "/uv.lock",
 }:
 let
-  lock = import ./lock.nix { inherit src lockFile; };
+  lock = import ./lock.nix { inherit src lockFile uvLock; };
 
   # The supported systems, by the CPU name a wheel's platform tag uses.
   systemsByArch = {

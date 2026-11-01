@@ -231,9 +231,27 @@ in
       "greetings, nix six=1.17.0"
       [ "packages" ];
 
+  # The external build, and the same build from a source whose uv.lock is
+  # not valid, with the fixture's uv.lock passed from outside the source.
   conformance-external =
-    runs "external" external.packages.simple.scripts.simple
-      "simple attrs=25.3.0 docopt=0.6.2 markupsafe=3.0.3 &lt;nix&gt;";
+    let
+      expected = "simple attrs=25.3.0 docopt=0.6.2 markupsafe=3.0.3 &lt;nix&gt;";
+      replaced = build {
+        src = runCommand "simple-with-a-broken-uv-lock" { } ''
+          cp -r ${./fixtures/simple} $out
+          chmod -R u+w $out
+          rm $out/uv-purifier.lock.json
+          echo 'not a uv.lock' > $out/uv.lock
+        '';
+        lockFile = ./fixtures/simple/uv-purifier.lock.json;
+        uvLock = ./fixtures/simple/uv.lock;
+      };
+    in
+    runCommand "uv-purifier-test-conformance-external" { } ''
+      test -e ${runs "external" external.packages.simple.scripts.simple expected}
+      test -e ${runs "external-uv-lock" replaced.packages.simple.scripts.simple expected}
+      touch $out
+    '';
 
   inherit (negative)
     conformance-stale
