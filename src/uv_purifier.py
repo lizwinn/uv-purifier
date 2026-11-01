@@ -11,6 +11,7 @@ those with uv itself and writes them to uv-purifier.lock.json beside uv.lock.
 
 import argparse
 import base64
+import configparser
 import hashlib
 import io
 import json
@@ -365,6 +366,66 @@ def toml_assignment(key, value):
     return f"{key} = {json.dumps(value)}\n"
 
 
+class EntryPoints(configparser.ConfigParser):
+    """A parser of a wheel's entry_points.txt, which keeps the case of the
+    script names."""
+
+    def optionxform(self, optionstr):
+        return optionstr
+
+
+def scratch_project(root, uv_lock, workdir):
+    """A writable copy of the project, for builds that may write into the
+    source tree, as setuptools writes its egg-info. A relative path that
+    uv.lock names outside the project gets a symlink at the same place
+    beside the copy, so the copy resolves it as the project does."""
+    outside = [
+        source_kind(p)[1]
+        for p in uv_lock.get("package", [])
+        if source_kind(p)[0] in ("path", "directory", "editable")
+        and not inside_project(source_kind(p)[1])
+        and not os.path.isabs(source_kind(p)[1])
+    ]
+    depth = max((len(os.path.normpath(p).split(os.sep)) for p in outside), default=0)
+    base = tempfile.mkdtemp(dir=workdir)
+    copy = os.path.join(base, *(["nested"] * depth), "project")
+    shutil.copytree(root, copy, ignore=shutil.ignore_patterns(".git", ".venv", "__pycache__", "dist"))
+    for path in outside:
+        link = os.path.normpath(os.path.join(copy, path))
+        if not os.path.exists(link):
+            os.makedirs(os.path.dirname(link), exist_ok=True)
+            os.symlink(os.path.normpath(os.path.join(root, path)), link)
+    return copy
+
+
+def member_outputs(root, name, workdir):
+    """What a workspace member's build produces, from one `uv build` of it:
+    the file names of its sdist and wheel, and the scripts the wheel
+    installs (its console_scripts and gui_scripts entry points, which
+    include scripts that a setup.py defines)."""
+    out = tempfile.mkdtemp(dir=workdir)
+    log(f"building {name} to record its outputs")
+    result = run_uv(["build", "--package", name, "--out-dir", out], cwd=root)
+    if result.returncode != 0:
+        raise Error(f"`uv build --package {name}` failed:\n{result.stderr.strip()}")
+    files = sorted(n for n in os.listdir(out) if n != ".gitignore")
+    sdists = [n for n in files if n.endswith((".tar.gz", ".zip"))]
+    wheels = [n for n in files if n.endswith(".whl")]
+    if len(sdists) != 1 or len(wheels) != 1:
+        raise Error(f"`uv build --package {name}` made {files}, not one sdist and one wheel")
+    scripts = []
+    with zipfile.ZipFile(os.path.join(out, wheels[0])) as wheel:
+        for entry in wheel.namelist():
+            parts = entry.split("/")
+            if len(parts) == 2 and parts[0].endswith(".dist-info") and parts[1] == "entry_points.txt":
+                parser = EntryPoints(delimiters=("=",), interpolation=None)
+                parser.read_string(wheel.read(entry).decode())
+                for section in ("console_scripts", "gui_scripts"):
+                    if parser.has_section(section):
+                        scripts += parser.options(section)
+    return {"sdist": sdists[0], "wheel": wheels[0], "scripts": sorted(set(scripts))}
+
+
 def inputs_hash(root, tree_dirs):
     """The hash the Nix library compares to tell whether the lockfile still
     matches uv.lock and the pyproject.toml files of the source trees in the
@@ -513,6 +574,14 @@ def lock(root):
                     request_tree(key, unpack(downloaded, workdir), workdir)
             entry["packages"] = records
 
+        members = workspace_members(uv_lock)
+        project = scratch_project(root, uv_lock, workdir)
+        outputs = {
+            package["name"]: member_outputs(project, package["name"], workdir)
+            for package in uv_lock.get("package", [])
+            if package["name"] in members and source_kind(package)[0] != "virtual"
+        }
+
     result = {
         "version": FORMAT_VERSION,
         "inputsHash": inputs_hash(root, tree_dirs),
@@ -520,6 +589,7 @@ def lock(root):
         "buildRequirements": requirement_sets,
         "builds": dict(sorted(builds.items())),
         "sources": dict(sorted(sources.items())),
+        "outputs": dict(sorted(outputs.items())),
     }
     with open(os.path.join(root, LOCK_FILE), "w") as f:
         json.dump(result, f, indent=2)

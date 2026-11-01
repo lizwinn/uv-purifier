@@ -200,5 +200,14 @@
     "markupsafe==3.0.3": 1,
     "simple==0.1.0": 2
   },
-  "sources": {}
+  "sources": {},
+  "outputs": {
+    "simple": {
+      "sdist": "simple-0.1.0.tar.gz",
+      "wheel": "simple-0.1.0-py3-none-any.whl",
+      "scripts": [
+        "simple"
+      ]
+    }
+  }
 }

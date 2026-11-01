@@ -184,5 +184,14 @@
     "outside-app==1.0.0": 0,
     "shared==0.2.0": 1
   },
-  "sources": {}
+  "sources": {},
+  "outputs": {
+    "outside-app": {
+      "sdist": "outside_app-1.0.0.tar.gz",
+      "wheel": "outside_app-1.0.0-py3-none-any.whl",
+      "scripts": [
+        "outside-app"
+      ]
+    }
+  }
 }

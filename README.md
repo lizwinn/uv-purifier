@@ -69,6 +69,20 @@ For each workspace member, `buildUvProject` gives:
 - `packages.<member>`, the member's sdist and wheel, which is what
   `uv publish` uploads. A virtual root has no package.
 
+Nix knows these outputs by name when it evaluates, from the lockfiles,
+without building anything and without generated Nix files:
+
+- `packages.<member>.artifacts."<file name>"` is each file of the package,
+  such as `packages.app.artifacts."app-2.0.0-py3-none-any.whl"`.
+- `environments.<member>.scripts.<script>` is each script the environment
+  installs for the member and the members it depends on, such as
+  `environments.app.scripts.app`.
+
+`uv-purifier lock` records them by building each member once with
+`uv build`, so scripts that a setup.py defines are included. A compiled
+member's wheel name gets the CPython and Linux platform tags of the system
+it is built for. Each build checks that it made what the lockfile records.
+
 `buildUvProject` takes these arguments besides `src`:
 
 - `python` (default `python3`), which must satisfy the project's

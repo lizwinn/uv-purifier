@@ -29,6 +29,9 @@ access is the fixed-output fetches of locked files and git checkouts.
   fixture with the inputs Nix built, run a script of the `.venv` it
   installed, edit a member's source, and run the script again to see the
   edit through the editable install.
+- `outputs` reads the names of packages' artifacts and environments'
+  scripts at evaluation time, which builds nothing, and compares them with
+  what the fixtures make.
 - `nix-library` (`tests/nix-library.nix`) tests wheel selection and the
   refusal of a lockfile that no longer matches uv.lock.
 - `cli` runs the command's help.

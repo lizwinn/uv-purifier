@@ -53,6 +53,13 @@ reports the NAR hash that nixpkgs' `fetchgit` checks.
 - `builds`: for each package that may be built, `"<name>==<version>"`, the
   index of its set.
 - `sources`: for each package from git, the `path` of its git entry.
+- `outputs`: for each workspace member with a build, the file names of its
+  sdist and wheel and the scripts its wheel installs. The lock run builds
+  each member once with `uv build`, in a scratch copy of the project, and
+  reads the scripts from the wheel's `entry_points.txt`. The Nix library
+  exposes them as `packages.<member>.artifacts` and
+  `environments.<member>.scripts`, and each build fails when it makes
+  something else.
 - `inputsHash`: a hash over uv.lock and the pyproject.toml of every source
   tree in the project. The Nix library computes the same hash and refuses
   the lockfile when they differ.

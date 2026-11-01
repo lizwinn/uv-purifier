@@ -63,5 +63,19 @@
     "app==2.0.0": 0,
     "greeting==1.0.0": 1
   },
-  "sources": {}
+  "sources": {},
+  "outputs": {
+    "app": {
+      "sdist": "app-2.0.0.tar.gz",
+      "wheel": "app-2.0.0-py3-none-any.whl",
+      "scripts": [
+        "app"
+      ]
+    },
+    "greeting": {
+      "sdist": "greeting-1.0.0.tar.gz",
+      "wheel": "greeting-1.0.0-py3-none-any.whl",
+      "scripts": []
+    }
+  }
 }

@@ -275,25 +275,84 @@ let
     }
   );
 
+  # What a member's build produces, as `uv-purifier lock` recorded it: the
+  # file names of its sdist and wheel, and the scripts the wheel installs.
+  outputsOf =
+    m:
+    (lock.purifier.outputs or { }).${m.name}
+      or (throw "uv-purifier: uv-purifier.lock.json records no outputs of ${m.name}. Run `uv-purifier lock`.");
+
+  # The file name of a member's wheel for this system and Python. The lock
+  # run built the wheel on its own system, so a compiled wheel's CPython
+  # tags and Linux platform tag are rewritten for this one; a pure wheel
+  # keeps its name.
+  wheelName =
+    lockedName:
+    let
+      parts = lib.splitString "-" (lib.removeSuffix ".whl" lockedName);
+      count = builtins.length parts;
+      head = lib.take (count - 3) parts;
+      pythonTag = builtins.elemAt parts (count - 3);
+      abiTag = builtins.elemAt parts (count - 2);
+      platformTag = builtins.elemAt parts (count - 1);
+      cpython = "cp${lib.replaceStrings [ "." ] [ "" ] python.pythonVersion}";
+      retag = tag: if builtins.match "cp3[0-9]+" tag != null then cpython else tag;
+      platform =
+        if platformTag == "any" then
+          "any"
+        else if builtins.match "linux_.*" platformTag != null then
+          "linux_${stdenvNoCC.hostPlatform.parsed.cpu.name}"
+        else
+          throw "uv-purifier: the lock run built ${lockedName}, whose platform tag ${platformTag} is not one a uv build makes on Linux";
+    in
+    lib.concatStringsSep "-" (
+      head
+      ++ [
+        (if abiTag == "abi3" then pythonTag else retag pythonTag)
+        (retag abiTag)
+        platform
+      ]
+    )
+    + ".whl";
+
   packages = listToAttrs (
     map (m: {
       inherit (m) name;
-      value = stdenvNoCC.mkDerivation {
-        pname = m.name;
-        version = memberVersion m;
-        inherit src;
-        nativeBuildInputs = [ uv ];
-        env = uvEnv;
-        dontConfigure = true;
-        buildPhase = ''
-          runHook preBuild
-          ${uvSetup}
-          ${uvBuild "--package ${lib.escapeShellArg m.name}"}
-          runHook postBuild
-        '';
-        dontInstall = true;
-        dontFixup = true;
-      };
+      value = stdenvNoCC.mkDerivation (
+        finalAttrs:
+        let
+          outputs = outputsOf m;
+          files = [
+            outputs.sdist
+            (wheelName outputs.wheel)
+          ];
+        in
+        {
+          pname = m.name;
+          version = memberVersion m;
+          inherit src;
+          nativeBuildInputs = [ uv ];
+          env = uvEnv;
+          dontConfigure = true;
+          buildPhase = ''
+            runHook preBuild
+            ${uvSetup}
+            ${uvBuild "--package ${lib.escapeShellArg m.name}"}
+            for file in ${lib.escapeShellArgs files}; do
+              if [ ! -f "$out/$file" ]; then
+                echo "uv-purifier: the build of ${m.name} made $(ls $out), not $file as uv-purifier.lock.json records. Run \`uv-purifier lock\`." >&2
+                exit 1
+              fi
+            done
+            runHook postBuild
+          '';
+          dontInstall = true;
+          dontFixup = true;
+          # Each file the build makes, by its name, known when Nix
+          # evaluates.
+          passthru.artifacts = lib.genAttrs files (file: "${finalAttrs.finalPackage}/${file}");
+        }
+      );
     }) builtMembers
   );
 
@@ -312,13 +371,26 @@ let
   environments = listToAttrs (
     map (m: {
       inherit (m) name;
-      value = stdenvNoCC.mkDerivation {
+      value = stdenvNoCC.mkDerivation (finalAttrs: {
         pname = "${m.name}-environment";
         version = memberVersion m;
         inherit src;
         nativeBuildInputs = [ uv ];
         env = uvEnv;
         dontConfigure = true;
+        # The scripts of the member and of the members it depends on, by
+        # name, known when Nix evaluates.
+        passthru.scripts = lib.genAttrs (lib.concatMap (name: (outputsOf membersByName.${name}).scripts) (
+          filter (name: packages ? ${name}) (memberClosure m.name)
+        )) (script: "${finalAttrs.finalPackage}/bin/${script}");
+        postBuild = ''
+          for script in ${lib.escapeShellArgs (builtins.attrNames finalAttrs.passthru.scripts)}; do
+            if [ ! -x "$out/bin/$script" ]; then
+              echo "uv-purifier: the environment of ${m.name} has no script $script, which uv-purifier.lock.json records. Run \`uv-purifier lock\`." >&2
+              exit 1
+            fi
+          done
+        '';
         buildPhase = ''
           runHook preBuild
           ${uvSetup}
@@ -337,7 +409,7 @@ let
           runHook postBuild
         '';
         dontInstall = true;
-      };
+      });
     }) lock.members
   );
 

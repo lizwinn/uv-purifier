@@ -118,6 +118,40 @@ in
 
   nix-library = import ./nix-library.nix { inherit pkgs; };
 
+  # The outputs of a project are known by name when Nix evaluates, from
+  # uv-purifier.lock.json: reading their names builds nothing.
+  outputs =
+    let
+      found = {
+        app = builtins.attrNames workspace.packages.app.artifacts;
+        greeting = builtins.attrNames workspace.packages.greeting.artifacts;
+        workspaceScripts = builtins.attrNames workspace.environments.workspace.scripts;
+        simpleScripts = builtins.attrNames simple.environments.simple.scripts;
+      };
+      expected = {
+        app = [
+          "app-2.0.0-py3-none-any.whl"
+          "app-2.0.0.tar.gz"
+        ];
+        greeting = [
+          "greeting-1.0.0-py3-none-any.whl"
+          "greeting-1.0.0.tar.gz"
+        ];
+        workspaceScripts = [ "app" ];
+        simpleScripts = [ "simple" ];
+      };
+      failures = lib.filter (name: found.${name} != expected.${name}) (lib.attrNames expected);
+    in
+    runCommand "uv-purifier-test-outputs" { } (
+      if failures == [ ] then
+        "touch $out"
+      else
+        ''
+          echo "unexpected outputs: "${lib.escapeShellArg (builtins.toJSON (lib.getAttrs failures found))} >&2
+          exit 1
+        ''
+    );
+
   cli = runCommand "uv-purifier-test-cli" { } ''
     ${lib.getExe cli} --help
     ${lib.getExe cli} lock --help
