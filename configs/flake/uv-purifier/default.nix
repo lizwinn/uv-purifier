@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: MIT
-{ ... }:
+{ closure-lib, ... }:
 {
   config,
   inputs,
@@ -8,21 +8,22 @@
 }:
 {
 
-  imports = [ inputs.flake-parts.flakeModules.partitions ];
+  imports = [
+    inputs.flake-parts.flakeModules.partitions
+    closure-lib.caisson.modules.flake."purifier/purifier-packages"
+  ];
+
+  # The scope `uv-purifier` is the `default` entry of this flake's package
+  # overlay registry (pkg-overlays/): the package set applies it by
+  # default, and the flake exports it as `pkgOverlays` and as the plain
+  # `overlays.default`. The flake publishes the derivations of the scope as
+  # its `packages`.
+  purifier.scope = "uv-purifier";
 
   debug = false;
   caisson = {
     libOverlays.exported = libOverlays: {
       inherit (libOverlays) default;
-    };
-
-    # The scope `uv-purifier` is the `default` entry of this flake's package
-    # overlay registry (pkg-overlays/): the package set applies it by
-    # default, and the flake exports it as `pkgOverlays` and as the plain
-    # `overlays.default`. The scope holds the builder, which is a function,
-    # so the `packages` output below takes the derivations of the scope.
-    nixpkgs = {
-      packages.export.enabled = false;
     };
   };
 
@@ -33,9 +34,7 @@
   perSystem =
     { config, pkgs, ... }:
     {
-      packages = lib.filterAttrs (_: lib.isDerivation) pkgs.uv-purifier // {
-        default = config.packages.cli;
-      };
+      packages.default = config.packages.cli;
       devShells.default = pkgs.mkShell {
         packages = [
           pkgs.uv
