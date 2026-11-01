@@ -117,6 +117,28 @@ in
     runs "simple" simple.packages.simple.scripts.simple
       "simple attrs=25.3.0 docopt=0.6.2 markupsafe=3.0.3 &lt;nix&gt;";
 
+  # The simple fixture built with nixpkgs' Python and its attrs among the
+  # build inputs, whose setup hook puts that attrs on PYTHONPATH. The build
+  # still installs the locked attrs, which the script imports with no
+  # PYTHONPATH.
+  pythonpath =
+    runs "pythonpath"
+      (simple.packages.simple.overrideAttrs (old: {
+        nativeBuildInputs = old.nativeBuildInputs ++ [
+          pkgs.python3
+          pkgs.python3Packages.attrs
+        ];
+        # The test means something only while the setup hook sets it.
+        preBuild = ''
+          echo "PYTHONPATH=$PYTHONPATH"
+          case "''${PYTHONPATH:-}" in
+            *${pkgs.python3Packages.attrs}*) ;;
+            *) echo "the setup hook did not put nixpkgs' attrs on PYTHONPATH" >&2; exit 1 ;;
+          esac
+        '';
+      })).scripts.simple
+      "simple attrs=25.3.0 docopt=0.6.2 markupsafe=3.0.3 &lt;nix&gt;";
+
   # The package of the virtual root has app, its scripts and every member
   # app depends on.
   workspace = runs "workspace" workspace.packages.workspace.scripts.app "hello, nix six=1.17.0";

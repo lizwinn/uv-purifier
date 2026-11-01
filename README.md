@@ -202,28 +202,15 @@ backend reports the requirements it adds at build time for the platform of
 the lock run; a backend that asks for other packages on another platform
 makes that platform's build fail with uv's error naming the package.
 
-## Real-world projects
+## Examples
 
-- [Flask](https://github.com/pallets/flask) at commit `49943b5`
-  (2026-10-30): a flit-core build with 79 locked packages, compiled wheels
-  (markupsafe, cffi, cryptography), packages built from sdists, and
-  dependency groups for tests, typing and docs. A lock took about 13
-  seconds with an empty uv cache and 7 to 10 seconds with a warm one. The
-  Nix build made Flask's package and release, and `prefetch` installed the
-  development environment offline; Flask's 494 tests pass in it with
-  `uv run --no-sync pytest`, and through `tests`. pyright resolved every
-  installed import from `.venv`. After `uv lock --upgrade-package pytest`,
-  the stale lockfile was refused with the command to run, and the relock
-  and a second `prefetch` brought pytest 9.2.0. The checks build this
-  commit on x86_64 and aarch64 from Flask's own source, with the lockfile
-  kept outside it (`tests/real-world/flask`).
-
-  Flask led to these changes. The lock run asks each PEP 517 hook of a
-  backend on its own, because maturin's bootstrap backend fails in its
-  editable hook alone. It downloads a file again when its hash does not
-  match, because a download now and then came back with other bytes.
-  `prefetch` uses a uv cache of its own. `prefetch` and `publish` check the
-  lockfile before they start Nix.
+CI locks and builds [Flask](https://github.com/pallets/flask) at commit
+`49943b5` on x86_64 and aarch64, from Flask's own source with the purifier
+lockfile kept outside it, in `tests/real-world/flask`. Flask is a flit-core
+build with compiled wheels such as markupsafe and cryptography, packages
+built from sdists, and dependency groups for tests, typing and docs. Its
+tests pass in the environment that `prefetch` installs offline, and through
+the `tests` output of the builder.
 
 ## Credits
 
