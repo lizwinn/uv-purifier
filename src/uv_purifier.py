@@ -198,15 +198,18 @@ module, _, attribute = sys.argv[1].partition(":")
 backend = importlib.import_module(module)
 for part in filter(None, attribute.split(".")):
     backend = getattr(backend, part)
-requires = []
+requires, failed = [], {}
 for hook in (
     "get_requires_for_build_sdist",
     "get_requires_for_build_wheel",
     "get_requires_for_build_editable",
 ):
     if hasattr(backend, hook):
-        requires += getattr(backend, hook)({})
-print(json.dumps(requires))
+        try:
+            requires += getattr(backend, hook)({})
+        except Exception as e:
+            failed[hook] = f"{type(e).__name__}: {e}"
+print(json.dumps({"requires": requires, "failed": failed}))
 """
 
 
@@ -231,7 +234,16 @@ def dynamic_requires(tree, pyproject, static, workdir):
     )
     if result.returncode != 0:
         raise Error(f"the build backend {backend} failed to report its requirements:\n{result.stderr.strip()}")
-    return json.loads(result.stdout.strip().splitlines()[-1])
+    report = json.loads(result.stdout.strip().splitlines()[-1])
+    failed = report["failed"]
+    if "get_requires_for_build_wheel" in failed:
+        raise Error(
+            f"the build backend {backend} failed to report the requirements of a wheel: "
+            + failed["get_requires_for_build_wheel"]
+        )
+    for hook, error in failed.items():
+        log(f"the build backend {backend} failed in {hook}, so its requirements are not locked: {error}")
+    return report["requires"]
 
 
 def unpack(archive, workdir):
@@ -273,13 +285,25 @@ def tree_requirements(tree, workdir):
     return requires
 
 
+DOWNLOAD_ATTEMPTS = 3
+
+
 def download(url, expected_uv_hash, directory):
-    """Downloads a locked file and checks its hash."""
+    """Downloads a locked file and checks its hash. A download whose hash
+    does not match is tried again, because a network path now and then
+    hands back other bytes for a URL; one that keeps not matching fails."""
     target = tempfile.mkdtemp(dir=directory)
     target = os.path.join(target, file_name(url) or "download")
-    with urllib.request.urlopen(url) as response, open(target, "wb") as out:
-        shutil.copyfileobj(response, out)
-    check_hash(target, expected_uv_hash, url)
+    for attempt in range(1, DOWNLOAD_ATTEMPTS + 1):
+        with urllib.request.urlopen(url) as response, open(target, "wb") as out:
+            shutil.copyfileobj(response, out)
+        try:
+            check_hash(target, expected_uv_hash, url)
+            return target
+        except Error as e:
+            if attempt == DOWNLOAD_ATTEMPTS:
+                raise
+            log(f"{e} ({os.path.getsize(target)} bytes); downloading it again")
     return target
 
 
@@ -662,6 +686,38 @@ def built_members(root):
     ]
 
 
+def check_lockfile(root):
+    """Checks, before a Nix build, the things the Nix library checks, so
+    that a stale or edited lockfile fails with the project's own paths."""
+    path = os.path.join(root, LOCK_FILE)
+    if not os.path.exists(path):
+        raise Error(f"{path} does not exist; run `uv-purifier lock`")
+    try:
+        with open(path) as f:
+            lockfile = json.load(f)
+    except ValueError as e:
+        raise Error(f"{path} is not valid JSON ({e}); rewrite it with `uv-purifier lock`") from e
+    if lockfile.get("version") != FORMAT_VERSION:
+        raise Error(
+            f"{path} has lock format version {lockfile.get('version')}; this uv-purifier writes "
+            f"version {FORMAT_VERSION}. Run `uv-purifier lock`"
+        )
+    if lockfile.get("contentHash") != content_hash(lockfile):
+        raise Error(f"{path} was changed after `uv-purifier lock` wrote it; rewrite it with `uv-purifier lock`")
+    with open(os.path.join(root, "uv.lock"), "rb") as f:
+        uv_lock = tomllib.load(f)
+    tree_dirs = [
+        source_kind(p)[1]
+        for p in uv_lock.get("package", [])
+        if source_kind(p)[0] in ("editable", "directory", "virtual")
+    ]
+    if lockfile.get("inputsHash") != inputs_hash(root, tree_dirs):
+        raise Error(
+            f"{path} was made for another uv.lock or pyproject.toml. "
+            "If pyproject.toml changed, run `uv lock`; then run `uv-purifier lock`"
+        )
+
+
 def nix_build(root, package=None):
     """Builds, with the Nix library this program was installed with, a
     member's package (its sdist and wheel), or without `package` the inputs
@@ -710,14 +766,24 @@ def sync(root, inputs=None):
     git, URLs and local paths from their wheels, and the workspace members
     and editable path dependencies as editable installs."""
     if inputs is None:
+        check_lockfile(root)
         log("building the locked files with Nix")
         inputs = nix_build(root)
+    # uv gets a cache of its own. With the user's cache, which holds index
+    # data from earlier online runs, uv picks distributions from that index
+    # data even with UV_NO_INDEX, and then fails offline to download them.
+    cache = os.path.join(
+        os.environ.get("XDG_CACHE_HOME", os.path.join(os.path.expanduser("~"), ".cache")),
+        "uv-purifier",
+        "uv",
+    )
     environment = dict(
         os.environ,
         UV_OFFLINE="1",
         UV_NO_INDEX="1",
         UV_FIND_LINKS=os.path.join(inputs, "wheelhouse"),
         UV_PYTHON_DOWNLOADS="never",
+        UV_CACHE_DIR=cache,
     )
     venv = os.environ.get("UV_PROJECT_ENVIRONMENT", os.path.join(root, ".venv"))
     python = os.path.join(venv, "bin", "python")
@@ -759,6 +825,7 @@ def sync(root, inputs=None):
 
 
 def publish(root, packages, uv_publish_args):
+    check_lockfile(root)
     members = built_members(root)
     for package in packages:
         if package not in members:

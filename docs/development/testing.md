@@ -34,6 +34,15 @@ access is the fixed-output fetches of locked files and git checkouts.
   what the fixtures make.
 - `nix-library` (`tests/nix-library.nix`) tests wheel selection and the
   refusal of a lockfile that no longer matches uv.lock.
+- `negative` (`tests/negative.nix`) breaks a copy of the simple fixture in
+  each way a developer breaks the lockfiles (a stale uv.lock, a dependency
+  added without `uv lock`, a tampered hash, a missing entry, a malformed or
+  missing lockfile, another format version) and checks with
+  nix-instantiate that the error names the command to run.
+- `unit` runs `tests/unit`: the lock tool's parsing, its URL-to-file-name
+  logic, its lockfile check, and split_requirements.py.
+- `flask` builds Flask at a pinned commit (`tests/real-world/flask`), runs
+  `uv-purifier sync` and Flask's test suite offline.
 - `cli` runs the command's help.
 - `treefmt` checks the formatting of the Nix files. `nix fmt` applies it.
 
@@ -41,8 +50,12 @@ access is the fixed-output fetches of locked files and git checkouts.
 
 `tests/relock-fixtures.sh` runs `uv lock` and `uv-purifier lock` in every
 fixture, with the uv of the flake's package set. It needs PyPI and GitHub.
-Relocking picks up new releases of build requirements such as hatchling and
-setuptools, so the fixture lockfiles change only when someone relocks them.
+A relock resolves the build requirements as of the time each lockfile
+records, so it reproduces the lockfiles byte for byte; the `relock` job of
+CI runs it and fails on any difference.
+
+`tests/real-world/flask/uv-purifier.lock.json` is what `uv-purifier lock`
+wrote in a checkout of Flask at the pinned commit.
 
 The local files of `tests/fixtures/sources/vendor` are built from the
 `*-src` directories beside them, as their pyproject.toml files say.

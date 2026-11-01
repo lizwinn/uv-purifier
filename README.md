@@ -19,8 +19,14 @@ nix run github:nix-purifiers/uv-purifier -- lock
 ```
 
 Commit `uv-purifier.lock.json`. Run it again whenever uv.lock changes, or
-the `[build-system]` table of a source tree in the project. The Nix build
-refuses a `uv-purifier.lock.json` that no longer matches them.
+the `[build-system]` table of a source tree in the project. The Nix build,
+`sync` and `publish` refuse a `uv-purifier.lock.json` that no longer
+matches them, or that was edited by hand, and say which command to run.
+
+A relock resolves the build requirements as of the time the lockfile
+records, so it keeps their versions and reproduces the lockfile byte for
+byte when nothing else changed. `uv-purifier lock --upgrade` resolves them
+anew.
 
 For every package the build may have to build (a workspace member, a
 dependency from git, a URL or a local path, and a dependency from an index
@@ -126,6 +132,11 @@ server that uses the project's `.venv`, such as pyright, Pylance or
 basedpyright, resolves every import from it. The checks run pyright on a
 synced fixture to keep that so.
 
+`sync` runs uv with a cache of its own, under
+`$XDG_CACHE_HOME/uv-purifier`. With the usual uv cache, which holds index
+data from online runs, uv picks distributions from that index data even
+with no index configured, and then cannot download them offline.
+
 ## Publish
 
 ```zsh
@@ -152,6 +163,29 @@ Nix built with `uv publish`. Arguments after `--` go to `uv publish`.
   and `sync` therefore install with `uv pip install --require-hashes`
   against a directory of the locked files, which checks every file against
   the hashes in uv.lock.
+
+## Projects tried
+
+- [Flask](https://github.com/pallets/flask) at commit `49943b5`
+  (2026-10-30): a flit-core build with 79 locked packages, compiled wheels
+  (markupsafe, cffi, cryptography), packages built from sdists, and
+  dependency groups for tests, typing and docs. A lock took about 13
+  seconds with an empty uv cache and 7 to 10 seconds with a warm one. The
+  Nix build made Flask's environment and package. `sync` installed the
+  development environment offline, and Flask's 494 tests pass in it with
+  `uv run --no-sync pytest`. pyright resolved every installed import from
+  `.venv`. After `uv lock --upgrade-package pytest`, `sync` refused the
+  stale lockfile and named `uv-purifier lock`, and the relock and a second
+  `sync` brought pytest 9.2.0. The checks build this commit on x86_64 and
+  aarch64 and run its tests (`tests/real-world/flask`).
+
+  Flask led to these changes. The lock run asks each PEP 517 hook of a
+  backend on its own, because maturin's bootstrap backend fails in its
+  editable hook alone. It downloads a file again when its hash does not
+  match, because a download now and then came back with other bytes.
+  `sync` uses a uv cache of its own, as described above. `sync` and
+  `publish` check the lockfile before they start Nix, so their errors name
+  the project's files.
 
 `docs/development/` describes the design and the tests.
 

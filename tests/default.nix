@@ -134,6 +134,8 @@ in
 
   negative = import ./negative.nix { inherit pkgs; };
 
+  flask = import ./real-world/flask { inherit pkgs buildUvProject cli; };
+
   # The unit tests of the lock tool and of split_requirements.py.
   unit =
     runCommand "uv-purifier-test-unit"
@@ -144,6 +146,7 @@ in
             ../src
             ../nix/lib
             ./unit
+            ./fixtures/simple
           ];
         };
         nativeBuildInputs = [ pkgs.python3 ];
