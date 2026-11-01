@@ -1,8 +1,11 @@
 # uv-purifier
 
-uv-purifier lets Nix build a [uv](https://docs.astral.sh/uv/) project in its
-sandbox, offline, from the project's lockfiles. The project keeps its two
-lockfiles and its own build files.
+uv-purifier keeps uv's development workflow on locked,
+Nix-resolved dependencies. Use the normal build and test commands in your
+working tree; building the project itself in the Nix sandbox is an
+optional next step.
+
+It follows the [purifier contract](https://github.com/nix-purifiers/purifier/blob/main/CONTRACT.md).
 
 uv.lock already pins every dependency of the project with its URL and hash,
 and the Nix library reads it directly. What uv.lock leaves out are the build
@@ -12,39 +15,117 @@ those with uv and writes them to `uv-purifier.lock.json` beside uv.lock.
 uv-purifier meets the [purifier contract](https://github.com/nix-purifiers/purifier/blob/main/CONTRACT.md)
 that every nix-purifier meets.
 
+## Installation
+
+Install the integration into your Nix profile once:
+
+```sh
+nix profile install 'github:nix-purifiers/uv-purifier'
+```
+
+This installs the purifier CLI. The workflow below prepares the native
+tool's cache, hook or environment; follow that activation step before using
+your usual commands. The ordinary tool itself remains your normal
+installation unless the setup explicitly supplies a toolchain.
+
+`nix shell` makes an integration available temporarily instead of installing
+it. Keep using the activation steps below where a project environment or
+prefetched cache is required.
+
 ## Quickstart
 
-From the directory that holds uv.lock:
+Install Nix, then run the following from your existing project's root.
+The setup prepares the locked dependencies and the integration that
+uv's normal commands use:
 
 ```zsh
 nix run github:nix-purifiers/uv-purifier -- lock
+nix run github:nix-purifiers/uv-purifier -- prefetch
+uv run --no-sync pytest
 ```
 
-Commit both lockfiles, uv.lock and `uv-purifier.lock.json`, to the
-project's repository. We recommend this setup, and the builder and the
-commands look for both lockfiles there by default.
+Commit the lockfiles that the lock command writes, including the build
+tool's own lockfile when it has one. Keep using the project's usual build,
+test and editor commands with this setup. Nix provides the locked
+dependencies; the development commands above run outside the Nix sandbox.
+No project Nix files are needed for this workflow.
 
-Then build the project from the same directory. The command adds no Nix
-file to the project, and it builds the workspace member `app`:
+Sandboxed builds of the whole project are an optional
+[next step](#building-the-project-with-nix).
+
+## Development loop
+
+uv has no plugin mechanism, so uv-purifier is a separate command. It runs
+uv for every step that resolves or installs packages.
 
 ```zsh
-nix build --impure --expr '
-  let
-    purifier = builtins.getFlake "github:nix-purifiers/uv-purifier";
-    pkgs = import purifier.inputs.nixpkgs {
-      system = builtins.currentSystem;
-      overlays = [ purifier.overlays.default ];
-    };
-  in
-  (pkgs.uv-purifier.buildUvProject { src = ./.; }).packages.app'
+nix run github:nix-purifiers/uv-purifier -- prefetch
+uv run --no-sync pytest
 ```
 
-This uses the purifier's pinned nixpkgs, matching the lock command above.
-To build with ambient `<nixpkgs>` from your Nix search path instead,
-replace `import purifier.inputs.nixpkgs` with `import <nixpkgs>`.
-Both forms need no Nix files in your project. The build tool and language
-versions must match the lockfile; with ambient nixpkgs, lock with the
-purifier from that package set or pass a compatible toolchain to the builder.
+`prefetch` realizes in the Nix store everything development needs on this
+system, keeps it alive with a garbage-collector root at
+`.uv-purifier/prefetch` beside the purifier lockfile (add `.uv-purifier/`
+to `.gitignore`), and
+installs the project's `.venv` from it: the dependencies, including the
+default dependency groups, with their hashes; the packages from git, URLs
+and local paths from the wheels Nix built; and the workspace members and
+editable path dependencies as editable installs. Run the project and its
+tests with `uv run --no-sync`, or with `.venv/bin/` directly. An edit to a
+member shows at once.
+
+A uv command that needs a package outside the lock, such as `uv add` of a
+new dependency, downloads it from the index when the network is up. With
+the network cut off, uv stops with its own network error, which does not
+name `uv-purifier lock`. In both cases the next steps are the ones below:
+`uv-purifier lock`, then `uv-purifier prefetch`.
+
+To add a dependency, add it with uv, which needs the network, then relock
+and prefetch again. `uv-purifier lock` keeps uv.lock's resolution: it runs
+`uv lock` only where uv.lock is missing or no longer matches
+pyproject.toml, which changes no version that uv can keep.
+
+```zsh
+uv add requests
+nix run github:nix-purifiers/uv-purifier -- lock
+nix run github:nix-purifiers/uv-purifier -- prefetch
+```
+
+To upgrade dependencies, `uv-purifier update` updates both lockfiles in
+one run. It runs `uv lock --upgrade`, or `uv lock --upgrade-package` for
+each package it names, and then relocks the purifier lockfile with the
+build requirements resolved anew:
+
+```zsh
+nix run github:nix-purifiers/uv-purifier -- update            # every package
+nix run github:nix-purifiers/uv-purifier -- update requests   # only requests
+```
+
+A relock with `lock` resolves the build requirements as of the time the
+lockfile records, so it keeps their versions and reproduces the lockfile
+byte for byte when nothing else changed.
+
+Every command finds both lockfiles in the project by default. For an
+external build, `--lockfile <path>` or the environment variable
+`UV_PURIFIER_LOCKFILE` names the purifier lockfile. `--tool-lockfile
+<path>` or `UV_PURIFIER_TOOL_LOCKFILE` names a uv.lock outside the
+project. With a uv.lock outside the project, `lock` and `update` write
+uv.lock to that path and leave the uv.lock of the project as it is. When
+that path has no file yet, `lock` starts from the uv.lock of the project.
+A dev shell of a packaging flake can set both variables to the paths it
+passes as `lockFile` and `uvLock`.
+
+`nix run github:nix-purifiers/uv-purifier -- publish -- --token "$TOKEN"`
+uploads the `release` that Nix built, with `uv publish`; arguments after
+`--` go to `uv publish`, and `--package <member>` limits it to members.
+
+## Building the project with Nix
+
+Once the native development workflow is working, you can also build and
+test the whole project in the Nix sandbox. For this step, keep a flake or
+another Nix build definition in the project's repository, or maintain an
+external packaging repository that points at its sources and lockfiles.
+The builder consumes the same lockfiles as the development workflow.
 
 `overlays.default` adds one attribute to the package set: the scope
 `uv-purifier`. The scope holds the builder `buildUvProject` and the
@@ -133,71 +214,29 @@ entry carries the `systems` its platform tags name. `buildUvProject` checks
 it with the purifier library's `checkLock` and takes the downloads of its
 system from `entriesFor`.
 
-## Development loop
+### One-off builds without a project Nix file
 
-uv has no plugin mechanism, so uv-purifier is a separate command. It runs
-uv for every step that resolves or installs packages.
-
-```zsh
-nix run github:nix-purifiers/uv-purifier -- prefetch
-uv run --no-sync pytest
-```
-
-`prefetch` realizes in the Nix store everything development needs on this
-system, keeps it alive with a garbage-collector root at
-`.uv-purifier/prefetch` beside the purifier lockfile (add `.uv-purifier/`
-to `.gitignore`), and
-installs the project's `.venv` from it: the dependencies, including the
-default dependency groups, with their hashes; the packages from git, URLs
-and local paths from the wheels Nix built; and the workspace members and
-editable path dependencies as editable installs. Run the project and its
-tests with `uv run --no-sync`, or with `.venv/bin/` directly. An edit to a
-member shows at once.
-
-A uv command that needs a package outside the lock, such as `uv add` of a
-new dependency, downloads it from the index when the network is up. With
-the network cut off, uv stops with its own network error, which does not
-name `uv-purifier lock`. In both cases the next steps are the ones below:
-`uv-purifier lock`, then `uv-purifier prefetch`.
-
-To add a dependency, add it with uv, which needs the network, then relock
-and prefetch again. `uv-purifier lock` keeps uv.lock's resolution: it runs
-`uv lock` only where uv.lock is missing or no longer matches
-pyproject.toml, which changes no version that uv can keep.
+For an ad hoc build, the builder can also be evaluated directly from the
+project root. Replace the example package name with one from your project:
 
 ```zsh
-uv add requests
-nix run github:nix-purifiers/uv-purifier -- lock
-nix run github:nix-purifiers/uv-purifier -- prefetch
+nix build --impure --expr '
+  let
+    purifier = builtins.getFlake "github:nix-purifiers/uv-purifier";
+    pkgs = import purifier.inputs.nixpkgs {
+      system = builtins.currentSystem;
+      overlays = [ purifier.overlays.default ];
+    };
+  in
+  (pkgs.uv-purifier.buildUvProject { src = ./.; }).packages.app'
 ```
 
-To upgrade dependencies, `uv-purifier update` updates both lockfiles in
-one run. It runs `uv lock --upgrade`, or `uv lock --upgrade-package` for
-each package it names, and then relocks the purifier lockfile with the
-build requirements resolved anew:
-
-```zsh
-nix run github:nix-purifiers/uv-purifier -- update            # every package
-nix run github:nix-purifiers/uv-purifier -- update requests   # only requests
-```
-
-A relock with `lock` resolves the build requirements as of the time the
-lockfile records, so it keeps their versions and reproduces the lockfile
-byte for byte when nothing else changed.
-
-Every command finds both lockfiles in the project by default. For an
-external build, `--lockfile <path>` or the environment variable
-`UV_PURIFIER_LOCKFILE` names the purifier lockfile. `--tool-lockfile
-<path>` or `UV_PURIFIER_TOOL_LOCKFILE` names a uv.lock outside the
-project. With a uv.lock outside the project, `lock` and `update` write
-uv.lock to that path and leave the uv.lock of the project as it is. When
-that path has no file yet, `lock` starts from the uv.lock of the project.
-A dev shell of a packaging flake can set both variables to the paths it
-passes as `lockFile` and `uvLock`.
-
-`nix run github:nix-purifiers/uv-purifier -- publish -- --token "$TOKEN"`
-uploads the `release` that Nix built, with `uv publish`; arguments after
-`--` go to `uv publish`, and `--package <member>` limits it to members.
+This uses the purifier's pinned nixpkgs, matching the lock command above.
+To build with ambient `<nixpkgs>` from your Nix search path instead,
+replace `import purifier.inputs.nixpkgs` with `import <nixpkgs>`.
+Both forms need no Nix files in your project. The build tool and language
+versions must match the lockfile; with ambient nixpkgs, lock with the
+purifier from that package set or pass a compatible toolchain to the builder.
 
 ## Working offline
 
@@ -259,6 +298,11 @@ the lock run; a backend that asks for other packages on another platform
 makes that platform's build fail with uv's error naming the package.
 
 ## Examples
+
+For day-to-day work on these projects, use the native-tool setup and
+commands in [Quickstart](#quickstart) and [Development loop](#development-loop).
+The Nix expressions below show optional sandboxed packaging of those
+projects.
 
 ### Flask
 
