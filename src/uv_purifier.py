@@ -17,6 +17,7 @@ import hashlib
 import io
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -359,25 +360,37 @@ def run_uv(args, cwd, env=None):
     return result
 
 
-def resolve_build_requirements(requires, requires_python, index_config, workdir):
+def resolve_build_requirements(requires, requires_python, index_config, constraints, workdir):
     """Resolves one set of build requirements for every platform, by locking
-    a throwaway project that depends on them. Returns uv.lock's packages."""
+    a throwaway project that depends on them. A package that uv.lock pins
+    gets uv.lock's version through `constraints`, so a build and the project
+    share one version of it; when the build requirements cannot have that
+    version, the set resolves without the constraints. Returns the packages
+    of the throwaway project's uv.lock."""
     project = tempfile.mkdtemp(dir=workdir)
-    lines = [
-        "[project]",
-        'name = "uv-purifier-build-requirements"',
-        'version = "0"',
-        f"requires-python = {json.dumps(requires_python)}",
-        f"dependencies = {json.dumps(requires)}",
-        "",
-        "[tool.uv]",
-        "package = false",
-    ]
-    with open(os.path.join(project, "pyproject.toml"), "w") as f:
-        f.write("\n".join(lines) + "\n")
-        for key, value in index_config.items():
-            f.write(toml_assignment(key, value))
-    result = run_uv(["lock", "--quiet"], cwd=project, env=resolution_env())
+
+    def attempt(with_constraints):
+        lines = [
+            "[project]",
+            'name = "uv-purifier-build-requirements"',
+            'version = "0"',
+            f"requires-python = {json.dumps(requires_python)}",
+            f"dependencies = {json.dumps(requires)}",
+            "",
+            "[tool.uv]",
+            "package = false",
+        ]
+        if with_constraints:
+            lines.append(f"constraint-dependencies = {json.dumps(constraints)}")
+        with open(os.path.join(project, "pyproject.toml"), "w") as f:
+            f.write("\n".join(lines) + "\n")
+            f.writelines(toml_assignment(key, value) for key, value in index_config.items())
+        return run_uv(["lock", "--quiet"], cwd=project, env=resolution_env())
+
+    result = attempt(True)
+    if result.returncode != 0 and constraints:
+        log(f"the build requirements {', '.join(requires)} cannot have uv.lock's versions; resolving them on their own")
+        result = attempt(False)
     if result.returncode != 0:
         raise Error(result.stderr.strip())
     with open(os.path.join(project, "uv.lock"), "rb") as f:
@@ -433,6 +446,29 @@ def scratch_project(root, uv_lock, workdir):
             os.makedirs(os.path.dirname(link), exist_ok=True)
             os.symlink(os.path.normpath(os.path.join(root, path)), link)
     return copy
+
+
+def derived_outputs(package, pyproject):
+    """The outputs of a workspace member that the Nix library derives from
+    uv.lock and the member's pyproject.toml (nix/lib/build-uv-project.nix,
+    derivedOutputs): the sdist and a pure wheel named after the normalized
+    name and the version uv.lock records, and the scripts of
+    [project.scripts] and [project.gui-scripts]. A field the build makes
+    otherwise, such as a dynamic version, is recorded in the lockfile."""
+    stem = re.sub(r"[-_.]+", "_", package["name"]).lower()
+    version = package.get("version")
+    project = pyproject.get("project", {})
+    dynamic = project.get("dynamic", [])
+    scripts = (
+        None
+        if "scripts" in dynamic or "gui-scripts" in dynamic
+        else sorted(set(project.get("scripts", {})) | set(project.get("gui-scripts", {})))
+    )
+    return {
+        "sdist": f"{stem}-{version}.tar.gz" if version else None,
+        "wheel": f"{stem}-{version}-py3-none-any.whl" if version else None,
+        "scripts": scripts,
+    }
 
 
 def member_outputs(root, name, workdir):
@@ -534,8 +570,22 @@ def lock(root, lockfile, upgrade=False):
     sources = {}
     tree_dirs = []
 
+    # What uv.lock already records, which the purifier lockfile does not
+    # repeat: the files of the registry packages, by file name with their
+    # URL, and the version of each registry package, as a constraint for
+    # the build requirements.
+    uv_files = {}
+    constraints = []
+    for package in uv_lock.get("package", []):
+        if source_kind(package)[0] == "registry":
+            constraints.append(f"{package['name']}=={package['version']}")
+            for entry in package.get("wheels", []) + ([package["sdist"]] if "sdist" in package else []):
+                uv_files[file_name(entry["url"])] = entry["url"]
+
     def add_artifact(entry):
         name = file_name(entry["url"])
+        if uv_files.get(name) == entry["url"]:
+            return name
         known = artifacts.get(name)
         record = {"path": name, "url": entry["url"], "mirrors": [], "hash": sri(entry["hash"])}
         if known is not None and known != record:
@@ -621,7 +671,7 @@ def lock(root, lockfile, upgrade=False):
             log(f"resolving the build requirements {', '.join(canonical)}")
             try:
                 packages = resolve_build_requirements(
-                    list(canonical), requires_python, index_config, workdir
+                    list(canonical), requires_python, index_config, constraints, workdir
                 )
             except Error as e:
                 log(f"could not resolve {', '.join(canonical)}: {e}")
@@ -649,11 +699,19 @@ def lock(root, lockfile, upgrade=False):
 
         members = workspace_members(uv_lock)
         project = scratch_project(root, uv_lock, workdir)
-        outputs = {
-            package["name"]: member_outputs(project, package["name"], workdir)
-            for package in uv_lock.get("package", [])
-            if package["name"] in members and source_kind(package)[0] != "virtual"
-        }
+        # Each member's outputs as its build makes them, recorded where they
+        # differ from what Nix derives.
+        outputs = {}
+        for package in uv_lock.get("package", []):
+            if package["name"] not in members or source_kind(package)[0] == "virtual":
+                continue
+            made = member_outputs(project, package["name"], workdir)
+            derived = derived_outputs(
+                package, tree_pyproject(os.path.join(root, source_kind(package)[1]))
+            )
+            differs = {k: v for k, v in made.items() if derived[k] != v}
+            if differs:
+                outputs[package["name"]] = differs
 
     result = {
         "version": FORMAT_VERSION,

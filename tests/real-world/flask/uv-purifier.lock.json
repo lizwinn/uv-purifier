@@ -4,570 +4,6 @@
   "resolvedAt": "2026-11-01T10:09:27Z",
   "artifacts": [
     {
-      "path": "anyio-4.15.1-py3-none-any.whl",
-      "url": "https://files.pythonhosted.org/packages/12/b8/4bd346e22b28902df4d651910f5242c28d84e4a5c2435ca5c3f797ed7e2e/anyio-4.15.1-py3-none-any.whl",
-      "mirrors": [],
-      "hash": "sha256-YVL9u/mnf97JdzFyG+v3xMRPfCm0JLAGWCYXPvx+0QE="
-    },
-    {
-      "path": "anyio-4.15.1.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/a9/d2/f4d173e22df740bc37b1db102b386ba719b66e95b0f0d751f556b387e6d2/anyio-4.15.1.tar.gz",
-      "mirrors": [],
-      "hash": "sha256-nygwYBjL1tMp5ko21YJW7f923Zlv5CO8lXMm5Xi4KpQ="
-    },
-    {
-      "path": "certifi-2026.10.23-py3-none-any.whl",
-      "url": "https://files.pythonhosted.org/packages/32/d1/a3652fe2c19134d0d15922177821d863cbd7e842d53a21bbe7e8e3a1b5ac/certifi-2026.10.23-py3-none-any.whl",
-      "mirrors": [],
-      "hash": "sha256-6bVN525TC7bPDM0DZ4cQOstY/UK6kw6ov5SN26ovYdE="
-    },
-    {
-      "path": "certifi-2026.10.23.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/fd/11/b524cbd9bbdaca58608e4cf4053fd463417549e1959fa8d3aa18319f9555/certifi-2026.10.23.tar.gz",
-      "mirrors": [],
-      "hash": "sha256-qYlebidYs3HgVF4yGjqP0fz9mCmtqIJKk237FqqvNs0="
-    },
-    {
-      "path": "cffi-2.1.1-cp311-cp311-macosx_10_15_x86_64.whl",
-      "url": "https://files.pythonhosted.org/packages/70/d2/16d99a0c4948febc0ebd133a13b2f688ff7f8cb04da971e1128872ce0c03/cffi-2.1.1-cp311-cp311-macosx_10_15_x86_64.whl",
-      "mirrors": [],
-      "hash": "sha256-yNLJ/R8tFveA0VEnq7BQ0T0adsA6S9h9fkmA5F5RHhI="
-    },
-    {
-      "path": "cffi-2.1.1-cp311-cp311-macosx_11_0_arm64.whl",
-      "url": "https://files.pythonhosted.org/packages/cd/95/31b535a9f0220ae9f357de4a08d57ce89cb417653c2fd9f075f50822a388/cffi-2.1.1-cp311-cp311-macosx_11_0_arm64.whl",
-      "mirrors": [],
-      "hash": "sha256-OYr/M87idn4+eB0lVMVL0N/zhrtDdYHg2AEf3hqULsE="
-    },
-    {
-      "path": "cffi-2.1.1-cp311-cp311-manylinux1_i686.manylinux2014_i686.manylinux_2_17_i686.manylinux_2_5_i686.whl",
-      "url": "https://files.pythonhosted.org/packages/ad/5a/4707a0dc1f203f5dde5a907b0d4e3c25d71120241048bd5bc6f1bb9d4e71/cffi-2.1.1-cp311-cp311-manylinux1_i686.manylinux2014_i686.manylinux_2_17_i686.manylinux_2_5_i686.whl",
-      "mirrors": [],
-      "hash": "sha256-FUhSVFAR93mRexHHjbI1jQldpiqaFyt4rQpYPuWtwNA="
-    },
-    {
-      "path": "cffi-2.1.1-cp311-cp311-manylinux2014_aarch64.manylinux_2_17_aarch64.whl",
-      "url": "https://files.pythonhosted.org/packages/ad/66/c19feabb28485b6e0bbaaafa90837a1ef5d302e90f2178bd33f17a49879b/cffi-2.1.1-cp311-cp311-manylinux2014_aarch64.manylinux_2_17_aarch64.whl",
-      "mirrors": [],
-      "hash": "sha256-MxHtYNNvgzeHlOEAmsYli6+/gfeIi0yqezWlIeP5WBM="
-    },
-    {
-      "path": "cffi-2.1.1-cp311-cp311-manylinux2014_ppc64le.manylinux_2_17_ppc64le.whl",
-      "url": "https://files.pythonhosted.org/packages/a7/92/500760486c8baab49a7a8a58ba7fc3355ec3974b454b8a09e528efde9e1d/cffi-2.1.1-cp311-cp311-manylinux2014_ppc64le.manylinux_2_17_ppc64le.whl",
-      "mirrors": [],
-      "hash": "sha256-bhkmI8SclEIWFqV3j7o1zw1ajQAGUMGWfvREjuXN2ZA="
-    },
-    {
-      "path": "cffi-2.1.1-cp311-cp311-manylinux2014_s390x.manylinux_2_17_s390x.whl",
-      "url": "https://files.pythonhosted.org/packages/a5/a7/a67c733254d6e7373f7822f8082d8d6beade791e0cf12a7611f376fa61c7/cffi-2.1.1-cp311-cp311-manylinux2014_s390x.manylinux_2_17_s390x.whl",
-      "mirrors": [],
-      "hash": "sha256-puch1LDkXVtl6HU0Rw5nsY3NCSyD9o+6CfFSucvAYa8="
-    },
-    {
-      "path": "cffi-2.1.1-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.whl",
-      "url": "https://files.pythonhosted.org/packages/f7/a4/4399daaf8f7dfee9d7c3327fdb0426ee041cc63edc358b93911ceb2bfc7a/cffi-2.1.1-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.whl",
-      "mirrors": [],
-      "hash": "sha256-NOJh94y2zqqjb0LyYT9DgNlNnHWanHPHae5uAkc2RjI="
-    },
-    {
-      "path": "cffi-2.1.1-cp311-cp311-musllinux_1_2_aarch64.whl",
-      "url": "https://files.pythonhosted.org/packages/28/f7/dabe6da2466ecbd82dc62e7342dc6b1065dad990c06f00f0ede9ebf2a0ed/cffi-2.1.1-cp311-cp311-musllinux_1_2_aarch64.whl",
-      "mirrors": [],
-      "hash": "sha256-ciXkUU7bZOtnQDJDU+DaBxGVT9jX2kV2dVscbgm2l80="
-    },
-    {
-      "path": "cffi-2.1.1-cp311-cp311-musllinux_1_2_i686.whl",
-      "url": "https://files.pythonhosted.org/packages/ce/87/616202d8e51342c07d2534c510111c4cc37201775ce8f60802c9335d1edd/cffi-2.1.1-cp311-cp311-musllinux_1_2_i686.whl",
-      "mirrors": [],
-      "hash": "sha256-35E3Jbedt7zwNEjza3v4gVNjQX1bWN7s+TBePjDw8ho="
-    },
-    {
-      "path": "cffi-2.1.1-cp311-cp311-musllinux_1_2_x86_64.whl",
-      "url": "https://files.pythonhosted.org/packages/b4/c6/ab025d75d2c26c19b087c0124e75ee31cb65032f4fe345d356d8c507ab97/cffi-2.1.1-cp311-cp311-musllinux_1_2_x86_64.whl",
-      "mirrors": [],
-      "hash": "sha256-9c+8X+dFQNM1F1tlbHJddNkONzDGJtklde6jUCnZr6o="
-    },
-    {
-      "path": "cffi-2.1.1-cp311-cp311-win32.whl",
-      "url": "https://files.pythonhosted.org/packages/db/e2/7e8109f65445bdc673a7b54f02c677de462db75674220fd1335efc8eb598/cffi-2.1.1-cp311-cp311-win32.whl",
-      "mirrors": [],
-      "hash": "sha256-+OxeZDqak39k4ZmeufddByJjdRkS3FzQbTyF+PRL58M="
-    },
-    {
-      "path": "cffi-2.1.1-cp311-cp311-win_amd64.whl",
-      "url": "https://files.pythonhosted.org/packages/73/c0/77ba02423c2f7d7091143c45cd49e0e6575c4c1967394bb542bd923a9b74/cffi-2.1.1-cp311-cp311-win_amd64.whl",
-      "mirrors": [],
-      "hash": "sha256-QvaTDDHcf1BzLJrnk8J4bHtrBEGVlnu93kC7m+gcTMA="
-    },
-    {
-      "path": "cffi-2.1.1-cp311-cp311-win_arm64.whl",
-      "url": "https://files.pythonhosted.org/packages/7c/47/9f1f85f9672ceda4984dc6c4f8824e8558992a2972c3d3c81fb8eb28d4ba/cffi-2.1.1-cp311-cp311-win_arm64.whl",
-      "mirrors": [],
-      "hash": "sha256-x2WfIlV8WgvEhVzWNfVe3saQzACKQHaFJ3YsufsmNFU="
-    },
-    {
-      "path": "cffi-2.1.1-cp312-cp312-macosx_10_15_x86_64.whl",
-      "url": "https://files.pythonhosted.org/packages/10/69/43965eccfdead3b9220015fd1320e117be8c6ed01a62ffab76eeb752f5d5/cffi-2.1.1-cp312-cp312-macosx_10_15_x86_64.whl",
-      "mirrors": [],
-      "hash": "sha256-yMaVdVaAhboLGxDAJJ13miFK6m9lIulJoPyfsPy0SdA="
-    },
-    {
-      "path": "cffi-2.1.1-cp312-cp312-macosx_11_0_arm64.whl",
-      "url": "https://files.pythonhosted.org/packages/54/7d/16e5a096677b5e313ca80cd5e5170efa3ea44624a82bb111925522da64b1/cffi-2.1.1-cp312-cp312-macosx_11_0_arm64.whl",
-      "mirrors": [],
-      "hash": "sha256-+Bs7jz1ONDVQ+kuqDkebup8tKc6cLptR0c4XGNdEL88="
-    },
-    {
-      "path": "cffi-2.1.1-cp312-cp312-manylinux1_i686.manylinux2014_i686.manylinux_2_17_i686.manylinux_2_5_i686.whl",
-      "url": "https://files.pythonhosted.org/packages/56/e6/8941622732edec876dd17d0453dce07317ae96db34f2ec1436c9d3785986/cffi-2.1.1-cp312-cp312-manylinux1_i686.manylinux2014_i686.manylinux_2_17_i686.manylinux_2_5_i686.whl",
-      "mirrors": [],
-      "hash": "sha256-gRvR4h0y3hLvyjI5Ogqz9RM7VPzpvUS4vXerB9oUv2o="
-    },
-    {
-      "path": "cffi-2.1.1-cp312-cp312-manylinux2014_aarch64.manylinux_2_17_aarch64.whl",
-      "url": "https://files.pythonhosted.org/packages/44/de/f98430906df1545ffde0d543dd124a7a439bc2cd32b36b9c53f805df7333/cffi-2.1.1-cp312-cp312-manylinux2014_aarch64.manylinux_2_17_aarch64.whl",
-      "mirrors": [],
-      "hash": "sha256-aOYv4R8w1cqCiSQoZvClKRQC2FKcoheKuK/FyWlK6JA="
-    },
-    {
-      "path": "cffi-2.1.1-cp312-cp312-manylinux2014_ppc64le.manylinux_2_17_ppc64le.whl",
-      "url": "https://files.pythonhosted.org/packages/6a/5b/717f1526b9957b34456313c31645c5b82b8fb5c3fe9e4752999be7128bfc/cffi-2.1.1-cp312-cp312-manylinux2014_ppc64le.manylinux_2_17_ppc64le.whl",
-      "mirrors": [],
-      "hash": "sha256-SnyTT3Ng6M1k/p763L0Qx8Y2T1MeQyuaS/XMvJ4Oi1A="
-    },
-    {
-      "path": "cffi-2.1.1-cp312-cp312-manylinux2014_s390x.manylinux_2_17_s390x.whl",
-      "url": "https://files.pythonhosted.org/packages/64/b3/f8aa4f3e34986c7e4ec45072d1b1b9dd295b6b18007b45518d79726dd725/cffi-2.1.1-cp312-cp312-manylinux2014_s390x.manylinux_2_17_s390x.whl",
-      "mirrors": [],
-      "hash": "sha256-MUPYHinh4gqc4QkB7DaQEpR4dllvdaIiI1ll8reugy4="
-    },
-    {
-      "path": "cffi-2.1.1-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.whl",
-      "url": "https://files.pythonhosted.org/packages/b1/db/dceb9dd5b231e1da801793f8acc9f3c52a7e1afe40bb1aae37e02b0faad5/cffi-2.1.1-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.whl",
-      "mirrors": [],
-      "hash": "sha256-wUUwIvSQ0kWaEYGdg60dWG6f9loSrD5wX/69RtNoXc8="
-    },
-    {
-      "path": "cffi-2.1.1-cp312-cp312-musllinux_1_2_aarch64.whl",
-      "url": "https://files.pythonhosted.org/packages/a0/d2/6cd24ae3be000a634109c247d1475d62e5616d0dc78c82770942ec384248/cffi-2.1.1-cp312-cp312-musllinux_1_2_aarch64.whl",
-      "mirrors": [],
-      "hash": "sha256-II+UG7nRjnaBOGd/Cm0s4B9ZDfVgQ92h3xU1rFfIhRc="
-    },
-    {
-      "path": "cffi-2.1.1-cp312-cp312-musllinux_1_2_x86_64.whl",
-      "url": "https://files.pythonhosted.org/packages/cb/52/3fa190537004dd7f0ab860a6dc7c0175b8667f68d1e618a46f5498d30250/cffi-2.1.1-cp312-cp312-musllinux_1_2_x86_64.whl",
-      "mirrors": [],
-      "hash": "sha256-IQAZtsfPB/CBtMVGNcjPdEN3ABNQ4pzA+BxDd7R5dzU="
-    },
-    {
-      "path": "cffi-2.1.1-cp312-cp312-win32.whl",
-      "url": "https://files.pythonhosted.org/packages/80/fb/0bb75b7039588c074b37ae99f40d9bfddf990ecb2fbc346ebccd2e56b9be/cffi-2.1.1-cp312-cp312-win32.whl",
-      "mirrors": [],
-      "hash": "sha256-BGv8JJEbN4Ue4bUaq4v/5xPYnGjGoFewlITOn9X2m04="
-    },
-    {
-      "path": "cffi-2.1.1-cp312-cp312-win_amd64.whl",
-      "url": "https://files.pythonhosted.org/packages/d9/79/615cc094e2fb508cade7de88d3b4f6c4ec2bab695c97bce9153dc65aadf5/cffi-2.1.1-cp312-cp312-win_amd64.whl",
-      "mirrors": [],
-      "hash": "sha256-9T5EKwhEnUKCH6Sk+6AACVr59idCpQD5eKn1V+xEM5o="
-    },
-    {
-      "path": "cffi-2.1.1-cp312-cp312-win_arm64.whl",
-      "url": "https://files.pythonhosted.org/packages/70/c6/d0ea84713fe46b243a436a18fcd47d639732747e21635c8a27191b06dc30/cffi-2.1.1-cp312-cp312-win_arm64.whl",
-      "mirrors": [],
-      "hash": "sha256-e95eTMXBAUCFmEK504OvKSsiY5pN/7clMUuvRZaM74A="
-    },
-    {
-      "path": "cffi-2.1.1-cp313-cp313-ios_13_0_arm64_iphoneos.whl",
-      "url": "https://files.pythonhosted.org/packages/9d/f4/035513d4117049066b4779dc3b7c0c0fdad175fa13731c9f4003f1cd1478/cffi-2.1.1-cp313-cp313-ios_13_0_arm64_iphoneos.whl",
-      "mirrors": [],
-      "hash": "sha256-tb39HIc9Tgk6q8DKhMTKbbxPdSr7XIbxRtl0JYDJ2i4="
-    },
-    {
-      "path": "cffi-2.1.1-cp313-cp313-ios_13_0_arm64_iphonesimulator.whl",
-      "url": "https://files.pythonhosted.org/packages/76/af/2aeb4dbb5fc41a04161ae9ff1518de7cec08e164f44a8ce6a4cf7fd2cd1d/cffi-2.1.1-cp313-cp313-ios_13_0_arm64_iphonesimulator.whl",
-      "mirrors": [],
-      "hash": "sha256-MTSAl/9bvoJ8zEF5XU3QmdnwYl597wDuZTwTekkMKmw="
-    },
-    {
-      "path": "cffi-2.1.1-cp313-cp313-macosx_10_15_x86_64.whl",
-      "url": "https://files.pythonhosted.org/packages/a7/46/2e5fdde8555706dd98139a910ca11be02809f3f605ce956f655d0214e100/cffi-2.1.1-cp313-cp313-macosx_10_15_x86_64.whl",
-      "mirrors": [],
-      "hash": "sha256-nSBVBQ6nFr04t/fxV5wnU4Zka0iUwVWj4vPNYu1Bt8Y="
-    },
-    {
-      "path": "cffi-2.1.1-cp313-cp313-macosx_11_0_arm64.whl",
-      "url": "https://files.pythonhosted.org/packages/55/41/4c7042f317b9217502988f0873af87e16ad606dc20f84e546e3e6ce9764c/cffi-2.1.1-cp313-cp313-macosx_11_0_arm64.whl",
-      "mirrors": [],
-      "hash": "sha256-Ge5hJ+403n2Dzj03Hrxe2Rrdvcw5+asVzk6zWk5TSXE="
-    },
-    {
-      "path": "cffi-2.1.1-cp313-cp313-manylinux1_i686.manylinux2014_i686.manylinux_2_17_i686.manylinux_2_5_i686.whl",
-      "url": "https://files.pythonhosted.org/packages/43/1f/1c3d90d91811c8f86ced9ed637956c54bfe5b79ca98fe976d7f8c8979f6b/cffi-2.1.1-cp313-cp313-manylinux1_i686.manylinux2014_i686.manylinux_2_17_i686.manylinux_2_5_i686.whl",
-      "mirrors": [],
-      "hash": "sha256-ao3d70dvq5bQZtV4/IhSZ2e4NqtashdU4dW/OHnDHHw="
-    },
-    {
-      "path": "cffi-2.1.1-cp313-cp313-manylinux2014_aarch64.manylinux_2_17_aarch64.whl",
-      "url": "https://files.pythonhosted.org/packages/37/6f/3b5ce4c3b2192d250f04908f2bfd91ef34552ec8f7716a5d4abdb8d67bb2/cffi-2.1.1-cp313-cp313-manylinux2014_aarch64.manylinux_2_17_aarch64.whl",
-      "mirrors": [],
-      "hash": "sha256-8WxwloanjHJ7u/BZ+SsL9Bxvxg3uxwbS3Bn1KRdaYSU="
-    },
-    {
-      "path": "cffi-2.1.1-cp313-cp313-manylinux2014_ppc64le.manylinux_2_17_ppc64le.whl",
-      "url": "https://files.pythonhosted.org/packages/02/10/4b3c75dde3d9663c9e02ba05c2668b954f671d4bbe346413ca8c696b295a/cffi-2.1.1-cp313-cp313-manylinux2014_ppc64le.manylinux_2_17_ppc64le.whl",
-      "mirrors": [],
-      "hash": "sha256-/NImUMkI17faFiu/qrWUoSJ6FdFkOpjGixIqxkL6ImQ="
-    },
-    {
-      "path": "cffi-2.1.1-cp313-cp313-manylinux2014_s390x.manylinux_2_17_s390x.whl",
-      "url": "https://files.pythonhosted.org/packages/df/62/14f74b9543e605d17701dc797b815958b8bb70b7624ce1b832ddad48ed6c/cffi-2.1.1-cp313-cp313-manylinux2014_s390x.manylinux_2_17_s390x.whl",
-      "mirrors": [],
-      "hash": "sha256-qpURxi0U2nqsybS/UfP2l6Yh6DstaRkAgkPDqtFo7qM="
-    },
-    {
-      "path": "cffi-2.1.1-cp313-cp313-manylinux2014_x86_64.manylinux_2_17_x86_64.whl",
-      "url": "https://files.pythonhosted.org/packages/95/95/86342356ff5953b3fb06f7ef7c5bee212d45e770abc7218d451b9148313c/cffi-2.1.1-cp313-cp313-manylinux2014_x86_64.manylinux_2_17_x86_64.whl",
-      "mirrors": [],
-      "hash": "sha256-qTEHlQTsxJ7+13RMR2pcNDqS+r9m3sLble2xsv3HcOI="
-    },
-    {
-      "path": "cffi-2.1.1-cp313-cp313-musllinux_1_2_aarch64.whl",
-      "url": "https://files.pythonhosted.org/packages/eb/ff/7b3429ff53aafe931ed8a5fc69f481bbef7ba6de87ddcbb63d08f483f613/cffi-2.1.1-cp313-cp313-musllinux_1_2_aarch64.whl",
-      "mirrors": [],
-      "hash": "sha256-otd1W+9aEu1Ij07x8bae6Rkdc5YIO3VaXSKV9u20dos="
-    },
-    {
-      "path": "cffi-2.1.1-cp313-cp313-musllinux_1_2_x86_64.whl",
-      "url": "https://files.pythonhosted.org/packages/34/34/a95870b9221e09cf4f2ce3178b1a210abdfe63a1bd357da940418d7b8d15/cffi-2.1.1-cp313-cp313-musllinux_1_2_x86_64.whl",
-      "mirrors": [],
-      "hash": "sha256-4Ly34PZ39UNVXSrf878ZwF9mzbR5bl/2AkQqsv48Tvc="
-    },
-    {
-      "path": "cffi-2.1.1-cp313-cp313-win32.whl",
-      "url": "https://files.pythonhosted.org/packages/70/ea/839b50531021a647fb5e929f72cf97bc1ff702b5472166164b5b6e76b851/cffi-2.1.1-cp313-cp313-win32.whl",
-      "mirrors": [],
-      "hash": "sha256-M0ZE+6xO/3PZhaF6kSJt9V0POUFgxM+4gOCEyPcWHKw="
-    },
-    {
-      "path": "cffi-2.1.1-cp313-cp313-win_amd64.whl",
-      "url": "https://files.pythonhosted.org/packages/60/a6/8b149b2c3f2e11aaa1618ef64500b45f50f22c57a977a4dff1aff1f91042/cffi-2.1.1-cp313-cp313-win_amd64.whl",
-      "mirrors": [],
-      "hash": "sha256-GqVkXDBGmwlTDE68p36/jxdhgpPFj4VJyxpUOlAjbn0="
-    },
-    {
-      "path": "cffi-2.1.1-cp313-cp313-win_arm64.whl",
-      "url": "https://files.pythonhosted.org/packages/01/9a/11f687cb39d6a3504060d5242f04f48c735afb4d3d533958a20594890cb2/cffi-2.1.1-cp313-cp313-win_arm64.whl",
-      "mirrors": [],
-      "hash": "sha256-Y7v9Xe0XxIQKwHzY8cIbqdlwgUH4QLMk9CL0GyB+OXM="
-    },
-    {
-      "path": "cffi-2.1.1-cp314-cp314-ios_13_0_arm64_iphoneos.whl",
-      "url": "https://files.pythonhosted.org/packages/d3/7b/d6bbf82b8b96e7391438898c42f5bd96dd02030fd5b64937d248220003e2/cffi-2.1.1-cp314-cp314-ios_13_0_arm64_iphoneos.whl",
-      "mirrors": [],
-      "hash": "sha256-fbth/jp2mUaAMPcbvl+KDjJqFR2qkb6xGm/B+YDFXhw="
-    },
-    {
-      "path": "cffi-2.1.1-cp314-cp314-ios_13_0_arm64_iphonesimulator.whl",
-      "url": "https://files.pythonhosted.org/packages/94/e6/bcc91b283be94735e268487a054004f0aa19947b6348fa367db53230abc8/cffi-2.1.1-cp314-cp314-ios_13_0_arm64_iphonesimulator.whl",
-      "mirrors": [],
-      "hash": "sha256-8k+0MTKkxrTLTrApSSkZsttkW+aAjXOPJE/RRsA8Mss="
-    },
-    {
-      "path": "cffi-2.1.1-cp314-cp314-macosx_10_15_x86_64.whl",
-      "url": "https://files.pythonhosted.org/packages/d9/99/c4b0c17cacdc9c3b8f280026286a9826d6a208c0f047591a3c3ce99b91fd/cffi-2.1.1-cp314-cp314-macosx_10_15_x86_64.whl",
-      "mirrors": [],
-      "hash": "sha256-0oYw9YVKsHqx/Uq6dW3lIybILmvhXUFLEnk/GXUEi1Q="
-    },
-    {
-      "path": "cffi-2.1.1-cp314-cp314-macosx_11_0_arm64.whl",
-      "url": "https://files.pythonhosted.org/packages/b3/a9/9db617d05d7367c1ad0ab00b3aa6e6f9281edd689b4ee9ea0e5a84e89c97/cffi-2.1.1-cp314-cp314-macosx_11_0_arm64.whl",
-      "mirrors": [],
-      "hash": "sha256-Zhwpi0gh7evq0Mke3SsAN01nrXxaH3qR1EQmM7edanI="
-    },
-    {
-      "path": "cffi-2.1.1-cp314-cp314-manylinux2014_aarch64.manylinux_2_17_aarch64.whl",
-      "url": "https://files.pythonhosted.org/packages/67/b8/b42132ca113dc567d37684437b46ca1dafc885902b02a110a02d5b511857/cffi-2.1.1-cp314-cp314-manylinux2014_aarch64.manylinux_2_17_aarch64.whl",
-      "mirrors": [],
-      "hash": "sha256-WKy4q44pXmxeoS+IjLsTzyFRHvKjMDoj9DJcKdF/5cE="
-    },
-    {
-      "path": "cffi-2.1.1-cp314-cp314-manylinux2014_ppc64le.manylinux_2_17_ppc64le.whl",
-      "url": "https://files.pythonhosted.org/packages/80/10/c5c0cbf0a657aecf59ef511409734230bf556f05a0d6c9eed7aa5c0a0166/cffi-2.1.1-cp314-cp314-manylinux2014_ppc64le.manylinux_2_17_ppc64le.whl",
-      "mirrors": [],
-      "hash": "sha256-RWph+lLVeev53y6VUurVEphV26/2weWpsbxAiAm9wGI="
-    },
-    {
-      "path": "cffi-2.1.1-cp314-cp314-manylinux2014_s390x.manylinux_2_17_s390x.whl",
-      "url": "https://files.pythonhosted.org/packages/d5/6c/bfa0b87b03b9238148beca990292843c9396ba069b54496596594173de7b/cffi-2.1.1-cp314-cp314-manylinux2014_s390x.manylinux_2_17_s390x.whl",
-      "mirrors": [],
-      "hash": "sha256-pPAKpC911uRZXohm50jMFwWtwM3f6yyobQ0DmT1jugM="
-    },
-    {
-      "path": "cffi-2.1.1-cp314-cp314-manylinux2014_x86_64.manylinux_2_17_x86_64.whl",
-      "url": "https://files.pythonhosted.org/packages/e9/02/4e7d553a7ac4b4238b38b3c1b80d486e9d4436f8d2acbf87a0997fe3f402/cffi-2.1.1-cp314-cp314-manylinux2014_x86_64.manylinux_2_17_x86_64.whl",
-      "mirrors": [],
-      "hash": "sha256-sEMTA6yuoQia1LPpzk5lGBk97xEY1Ac8qEhjXuTqLpY="
-    },
-    {
-      "path": "cffi-2.1.1-cp314-cp314-musllinux_1_2_aarch64.whl",
-      "url": "https://files.pythonhosted.org/packages/82/1d/a4aaf9babd75acb4d5f223bff71533bee748dd770a382619a798960ee9ba/cffi-2.1.1-cp314-cp314-musllinux_1_2_aarch64.whl",
-      "mirrors": [],
-      "hash": "sha256-ZPrqIPTiYTNjoam5x91zBY8+zQATOlEecq18URZY9Sc="
-    },
-    {
-      "path": "cffi-2.1.1-cp314-cp314-musllinux_1_2_x86_64.whl",
-      "url": "https://files.pythonhosted.org/packages/81/10/5dc0e7bdd18e22107054288283380fc97a06ae3f1656a106908d666a3c88/cffi-2.1.1-cp314-cp314-musllinux_1_2_x86_64.whl",
-      "mirrors": [],
-      "hash": "sha256-XFj+YT3F5TNjV+/1VYJKMU2OQygmAENcjRy2p6L+3RM="
-    },
-    {
-      "path": "cffi-2.1.1-cp314-cp314-win32.whl",
-      "url": "https://files.pythonhosted.org/packages/0b/e9/d0061c364cde06ee43168a0d076ac1da512cbc380d44767b844ba34fe2b6/cffi-2.1.1-cp314-cp314-win32.whl",
-      "mirrors": [],
-      "hash": "sha256-Ghile1jPsh/CjXLodqzxDq7Weh7ZYib5KvTfaB1XHEw="
-    },
-    {
-      "path": "cffi-2.1.1-cp314-cp314-win_amd64.whl",
-      "url": "https://files.pythonhosted.org/packages/a7/06/1c3e01e3ba14c39f6d10bfbac52753b7e22259e38088e5cfe1d704918690/cffi-2.1.1-cp314-cp314-win_amd64.whl",
-      "mirrors": [],
-      "hash": "sha256-MiK6XWePgKAw5q+8wz3Brly0X6yrthzuLHAWuEMv3kg="
-    },
-    {
-      "path": "cffi-2.1.1-cp314-cp314-win_arm64.whl",
-      "url": "https://files.pythonhosted.org/packages/87/5b/da4e39efe18eeb89cf580ea9cfc66b6a7c3eadb808fc0cc1d3a295cb5a5d/cffi-2.1.1-cp314-cp314-win_arm64.whl",
-      "mirrors": [],
-      "hash": "sha256-qzbVX57S0GcydmfC/qGN2gGOtijdY0eqAd2mzx9dODY="
-    },
-    {
-      "path": "cffi-2.1.1-cp314-cp314t-macosx_10_15_x86_64.whl",
-      "url": "https://files.pythonhosted.org/packages/23/59/40338bf421c5accea1d45158170c87006ef1cd371b05c077e76476949728/cffi-2.1.1-cp314-cp314t-macosx_10_15_x86_64.whl",
-      "mirrors": [],
-      "hash": "sha256-d1DGRJ3/eGS7m7J937Amd1YYkgGjr8kR2Cs8qs1w38M="
-    },
-    {
-      "path": "cffi-2.1.1-cp314-cp314t-macosx_11_0_arm64.whl",
-      "url": "https://files.pythonhosted.org/packages/7d/47/5ecf1023850036e674c77ec4de86182d309ae344e39e7cba984b7df5d647/cffi-2.1.1-cp314-cp314t-macosx_11_0_arm64.whl",
-      "mirrors": [],
-      "hash": "sha256-C+zqq+Vq9oaJUTai3njbVOzY5ARrI2uP1tbLYTiem/I="
-    },
-    {
-      "path": "cffi-2.1.1-cp314-cp314t-manylinux2014_aarch64.manylinux_2_17_aarch64.whl",
-      "url": "https://files.pythonhosted.org/packages/2a/9c/92934c3bea9f785b23eba304538c0b4d37a2a96d2431eb3a1bc87a11aa19/cffi-2.1.1-cp314-cp314t-manylinux2014_aarch64.manylinux_2_17_aarch64.whl",
-      "mirrors": [],
-      "hash": "sha256-ScvHDmVC1MzMuTZVjRBkqAElQeePgh+VXP8k41d3bJQ="
-    },
-    {
-      "path": "cffi-2.1.1-cp314-cp314t-manylinux2014_ppc64le.manylinux_2_17_ppc64le.whl",
-      "url": "https://files.pythonhosted.org/packages/4d/45/ba4c93527bc38616a8bd36488acb69a2212d60486794f0c1f318949bbb76/cffi-2.1.1-cp314-cp314t-manylinux2014_ppc64le.manylinux_2_17_ppc64le.whl",
-      "mirrors": [],
-      "hash": "sha256-4tZbMfNmGc2jmZt4sqqWMudreESOelb8QkCCQgDnxPw="
-    },
-    {
-      "path": "cffi-2.1.1-cp314-cp314t-manylinux2014_s390x.manylinux_2_17_s390x.whl",
-      "url": "https://files.pythonhosted.org/packages/80/e9/b6ef565e452acb932fb0cb5443f44a78efbd1233e566f02b5a83855e9115/cffi-2.1.1-cp314-cp314t-manylinux2014_s390x.manylinux_2_17_s390x.whl",
-      "mirrors": [],
-      "hash": "sha256-KJB6ub+2qhMYTPwXxrjhAjxatv1wdtjCCjXln+BPjyk="
-    },
-    {
-      "path": "cffi-2.1.1-cp314-cp314t-manylinux2014_x86_64.manylinux_2_17_x86_64.whl",
-      "url": "https://files.pythonhosted.org/packages/9a/95/eff5f0cee78d2eabc7eebffec40d3fc1876b5f3c95582e018bb4b99601f2/cffi-2.1.1-cp314-cp314t-manylinux2014_x86_64.manylinux_2_17_x86_64.whl",
-      "mirrors": [],
-      "hash": "sha256-UbMdHJgnSETP14OM4Av8J8dCOk3AD8B3L8MzHCzJBnY="
-    },
-    {
-      "path": "cffi-2.1.1-cp314-cp314t-musllinux_1_2_aarch64.whl",
-      "url": "https://files.pythonhosted.org/packages/fa/01/579d39fb8bef00a335a23d83757b44feb24cd6345a2c451b64cb67b9c362/cffi-2.1.1-cp314-cp314t-musllinux_1_2_aarch64.whl",
-      "mirrors": [],
-      "hash": "sha256-Xnzsuq24OIR5PgWCjO5ZshCyRYO5x0JdC6anVP4i604="
-    },
-    {
-      "path": "cffi-2.1.1-cp314-cp314t-musllinux_1_2_x86_64.whl",
-      "url": "https://files.pythonhosted.org/packages/8d/b0/0b44f47c60b01b57b6e2bbd92343f13a85a1d93bc46ccf6e47e244acd99c/cffi-2.1.1-cp314-cp314t-musllinux_1_2_x86_64.whl",
-      "mirrors": [],
-      "hash": "sha256-JXkurCeHdgnnuwbUL/iCeKZiT/8rqbu1I8CWFrEX6A8="
-    },
-    {
-      "path": "cffi-2.1.1-cp314-cp314t-win32.whl",
-      "url": "https://files.pythonhosted.org/packages/eb/d2/3b7176cb570a1d3e27faf67b72f591af508036e0d8b2be2ef9af9e8c84bb/cffi-2.1.1-cp314-cp314t-win32.whl",
-      "mirrors": [],
-      "hash": "sha256-jvU7Lem8uRl9MYVCVlddWdusDLpyrGJ7spHvXs63S+Q="
-    },
-    {
-      "path": "cffi-2.1.1-cp314-cp314t-win_amd64.whl",
-      "url": "https://files.pythonhosted.org/packages/56/78/31f00c1bcd97c9bbf55f1bfdf5bc809a5de8887473e90bb9960dca825e80/cffi-2.1.1-cp314-cp314t-win_amd64.whl",
-      "mirrors": [],
-      "hash": "sha256-YW8Jfy/kFbySokfwLhH2NOH56ag9Mn48kVwVCJyHhp4="
-    },
-    {
-      "path": "cffi-2.1.1-cp314-cp314t-win_arm64.whl",
-      "url": "https://files.pythonhosted.org/packages/7b/1b/58496f2ed0a35de575250c02a43ab3cc2c04d494a88fed31c1cabc0fd176/cffi-2.1.1-cp314-cp314t-win_arm64.whl",
-      "mirrors": [],
-      "hash": "sha256-rSyGxJW4mdhi6g9LQokbhxOjvUXdQQXH/VHCpy8586U="
-    },
-    {
-      "path": "cffi-2.1.1-cp315-cp315-ios_13_0_arm64_iphoneos.whl",
-      "url": "https://files.pythonhosted.org/packages/c1/8f/9ebe220eab48a093d1a5a5e339ab0dc7316eef3bb04d63c42f0251b61f50/cffi-2.1.1-cp315-cp315-ios_13_0_arm64_iphoneos.whl",
-      "mirrors": [],
-      "hash": "sha256-3drZK1VFE6MfJyVwZ4ujB/ufYY8F49Sl6sr/+ergPh0="
-    },
-    {
-      "path": "cffi-2.1.1-cp315-cp315-ios_13_0_arm64_iphonesimulator.whl",
-      "url": "https://files.pythonhosted.org/packages/ff/69/844bad3ece306c4782c2ecb93597035b6690d48704b803914c199da1e8b3/cffi-2.1.1-cp315-cp315-ios_13_0_arm64_iphonesimulator.whl",
-      "mirrors": [],
-      "hash": "sha256-2g5XP5+XFZOQyJ2fGp5BkItm1AjMW1jQjPOEfYRMUxs="
-    },
-    {
-      "path": "cffi-2.1.1-cp315-cp315-macosx_10_15_x86_64.whl",
-      "url": "https://files.pythonhosted.org/packages/1b/8a/af668013284634733f02d683458a0728739c7d6ddb5e14cb0c20832266fe/cffi-2.1.1-cp315-cp315-macosx_10_15_x86_64.whl",
-      "mirrors": [],
-      "hash": "sha256-+5IgOoiz0wUwNNt3URAIHEnSi+ZVGSOAXgOZJAk3YeQ="
-    },
-    {
-      "path": "cffi-2.1.1-cp315-cp315-macosx_11_0_arm64.whl",
-      "url": "https://files.pythonhosted.org/packages/0c/75/2f5207ff6d1a613133b23a5203cc0c2a628313b5eb3974d7956ae3c57950/cffi-2.1.1-cp315-cp315-macosx_11_0_arm64.whl",
-      "mirrors": [],
-      "hash": "sha256-KuZL55K4lm8saVOBmXKLKQ40cmViiW3x5dyP/Y2BiOg="
-    },
-    {
-      "path": "cffi-2.1.1-cp315-cp315-manylinux2014_aarch64.manylinux_2_17_aarch64.whl",
-      "url": "https://files.pythonhosted.org/packages/e2/31/9e1313b0a6e30e91b3b3d3fff51ae99c857c07738e3afcce1f7334e1b7ab/cffi-2.1.1-cp315-cp315-manylinux2014_aarch64.manylinux_2_17_aarch64.whl",
-      "mirrors": [],
-      "hash": "sha256-UHokwoLg9C+O1zfPBIVyy/WARo2lVVdkqDMXNenHNrY="
-    },
-    {
-      "path": "cffi-2.1.1-cp315-cp315-manylinux2014_ppc64le.manylinux_2_17_ppc64le.whl",
-      "url": "https://files.pythonhosted.org/packages/50/e3/f6234a833e6e08c7007003074723c406559eecf9b48dfc97471e5a8eb7a0/cffi-2.1.1-cp315-cp315-manylinux2014_ppc64le.manylinux_2_17_ppc64le.whl",
-      "mirrors": [],
-      "hash": "sha256-JG+kDOhkWmFP9oLgtw83E05GDq+Tp3Xgy+PMpYWmeoA="
-    },
-    {
-      "path": "cffi-2.1.1-cp315-cp315-manylinux2014_s390x.manylinux_2_17_s390x.whl",
-      "url": "https://files.pythonhosted.org/packages/0d/fc/5f74e293fced6edb51af3a46c4ccf6c23c9943774ecb375ddbd522c76add/cffi-2.1.1-cp315-cp315-manylinux2014_s390x.manylinux_2_17_s390x.whl",
-      "mirrors": [],
-      "hash": "sha256-RxzuZTrojeYgllUubSTMtKWtuMjJ8QtQVNASLBW/J3k="
-    },
-    {
-      "path": "cffi-2.1.1-cp315-cp315-manylinux2014_x86_64.manylinux_2_17_x86_64.whl",
-      "url": "https://files.pythonhosted.org/packages/44/16/29e6d01b388bef055ecd6ca8244b3f4d336bd09e92d5d892187b9601084e/cffi-2.1.1-cp315-cp315-manylinux2014_x86_64.manylinux_2_17_x86_64.whl",
-      "mirrors": [],
-      "hash": "sha256-rq4OMwyfas1oH2R9Rs79MMKfk+M5KILnkugggMlpE5k="
-    },
-    {
-      "path": "cffi-2.1.1-cp315-cp315-musllinux_1_2_aarch64.whl",
-      "url": "https://files.pythonhosted.org/packages/a4/18/fa7f1f6857d5eb88a4ca99ffcbfb7c387a287ccc154c64a73e86314745d7/cffi-2.1.1-cp315-cp315-musllinux_1_2_aarch64.whl",
-      "mirrors": [],
-      "hash": "sha256-QqSUzuNEN/BVRkVRRPK12awJsfrOYrz85ZfS5SEGZog="
-    },
-    {
-      "path": "cffi-2.1.1-cp315-cp315-musllinux_1_2_x86_64.whl",
-      "url": "https://files.pythonhosted.org/packages/e0/9f/e8e3dfa04a1b4c241f8c91faacad872b4d4efd051d49764ad4e2fd4b9fea/cffi-2.1.1-cp315-cp315-musllinux_1_2_x86_64.whl",
-      "mirrors": [],
-      "hash": "sha256-zFctrOP2DvmNexL/QR0g9TYv6zGgQ56rAIW7/TSZgtc="
-    },
-    {
-      "path": "cffi-2.1.1-cp315-cp315-win32.whl",
-      "url": "https://files.pythonhosted.org/packages/f8/7e/8debeb04f1ab9fe2a6963964cd6f1aaf7192627b83926586a6a4e089c9fa/cffi-2.1.1-cp315-cp315-win32.whl",
-      "mirrors": [],
-      "hash": "sha256-T0IUH8FCUN5t3l7n6kQyvgFyUtkfGcWtBDwITOpinKw="
-    },
-    {
-      "path": "cffi-2.1.1-cp315-cp315-win_amd64.whl",
-      "url": "https://files.pythonhosted.org/packages/e0/31/5158704cc474ab65c1647932e88be78dc0873f47130e253be38bcaf13d01/cffi-2.1.1-cp315-cp315-win_amd64.whl",
-      "mirrors": [],
-      "hash": "sha256-5ujP8U1vsL5woJwL3FgJb1AZUtBGJOv4Z+DlbaLfiWA="
-    },
-    {
-      "path": "cffi-2.1.1-cp315-cp315-win_arm64.whl",
-      "url": "https://files.pythonhosted.org/packages/cc/4b/b3a2da8570c704ffc0f9762cdc3ec0f02c8573798e0b5cf7f11c82bbb70f/cffi-2.1.1-cp315-cp315-win_arm64.whl",
-      "mirrors": [],
-      "hash": "sha256-JzUNqhHU8QxUDm6J2tpMVP63JWrQPppNwHXrrXujYNE="
-    },
-    {
-      "path": "cffi-2.1.1-cp315-cp315t-macosx_10_15_x86_64.whl",
-      "url": "https://files.pythonhosted.org/packages/d0/ef/5443574510a1207e6f6bc38ba6e1f1de36cb48fef07b2728bb896a21f430/cffi-2.1.1-cp315-cp315t-macosx_10_15_x86_64.whl",
-      "mirrors": [],
-      "hash": "sha256-wmYI0iIvselEh+Sjh9hfE+tV1e1yXLJaDFiaxO5g57w="
-    },
-    {
-      "path": "cffi-2.1.1-cp315-cp315t-macosx_11_0_arm64.whl",
-      "url": "https://files.pythonhosted.org/packages/7e/ae/a56fa8c4686ad50e148fcbc8d3ae0d03915ff5c30d795058988c24118cef/cffi-2.1.1-cp315-cp315t-macosx_11_0_arm64.whl",
-      "mirrors": [],
-      "hash": "sha256-S+ljQ+Qi8t/NEqtcn1rr4D+C9zfGv/7KaDCzh1y0Sqs="
-    },
-    {
-      "path": "cffi-2.1.1-cp315-cp315t-manylinux2014_aarch64.manylinux_2_17_aarch64.whl",
-      "url": "https://files.pythonhosted.org/packages/53/b2/6187f46f2912276a3ae284076109cc5c8680482f11f766ccf26db4a86427/cffi-2.1.1-cp315-cp315t-manylinux2014_aarch64.manylinux_2_17_aarch64.whl",
-      "mirrors": [],
-      "hash": "sha256-k3wAUsBaMcodrxjeMVju1Nv8ucwQetvqInco1ke+cB4="
-    },
-    {
-      "path": "cffi-2.1.1-cp315-cp315t-manylinux2014_ppc64le.manylinux_2_17_ppc64le.whl",
-      "url": "https://files.pythonhosted.org/packages/8a/f6/c3ad28bd19f77047a03084424fbd4cbe997303267c14423737324be0385d/cffi-2.1.1-cp315-cp315t-manylinux2014_ppc64le.manylinux_2_17_ppc64le.whl",
-      "mirrors": [],
-      "hash": "sha256-30I9QO6GVGNEIYErw7GW2j+b19MpKdqBP4OUxDSKU1g="
-    },
-    {
-      "path": "cffi-2.1.1-cp315-cp315t-manylinux2014_s390x.manylinux_2_17_s390x.whl",
-      "url": "https://files.pythonhosted.org/packages/a0/cd/ccac9013a5bd9fd764de118674ab9c805b5ca10c19270d90ee273f8b2240/cffi-2.1.1-cp315-cp315t-manylinux2014_s390x.manylinux_2_17_s390x.whl",
-      "mirrors": [],
-      "hash": "sha256-pzCggxkGNMZcyja6X0iVMVduvXm81cjhchMPZFMScjE="
-    },
-    {
-      "path": "cffi-2.1.1-cp315-cp315t-manylinux2014_x86_64.manylinux_2_17_x86_64.whl",
-      "url": "https://files.pythonhosted.org/packages/52/86/2976131c639aead931c5bee5aba67e4b09fbeb8018b6f282f70803f923a7/cffi-2.1.1-cp315-cp315t-manylinux2014_x86_64.manylinux_2_17_x86_64.whl",
-      "mirrors": [],
-      "hash": "sha256-Nj4F+njhURbDwywhDuNohP1rmvptRA5HESw71RHWTLY="
-    },
-    {
-      "path": "cffi-2.1.1-cp315-cp315t-musllinux_1_2_aarch64.whl",
-      "url": "https://files.pythonhosted.org/packages/ac/0c/33a7aeab2f9c76918c52e084beb39c570db3588133412929e8ec06fab90b/cffi-2.1.1-cp315-cp315t-musllinux_1_2_aarch64.whl",
-      "mirrors": [],
-      "hash": "sha256-dw3p2xHoQhO+7FAc/KoBOwGYIMqIHgM0TepYRPeHbZQ="
-    },
-    {
-      "path": "cffi-2.1.1-cp315-cp315t-musllinux_1_2_x86_64.whl",
-      "url": "https://files.pythonhosted.org/packages/e3/26/2cde30fdde421130bfc18f70395731a6e6b2053c6a1978a5258ff04e72fa/cffi-2.1.1-cp315-cp315t-musllinux_1_2_x86_64.whl",
-      "mirrors": [],
-      "hash": "sha256-faDF7/gPAZfzs9EjLsWmgqkyX0rpAWp49fXKNfnO0fU="
-    },
-    {
-      "path": "cffi-2.1.1-cp315-cp315t-win32.whl",
-      "url": "https://files.pythonhosted.org/packages/6d/cd/a361394c94b2129d604bb846f624a8e88255a3ee33129c434a00d715e64f/cffi-2.1.1-cp315-cp315t-win32.whl",
-      "mirrors": [],
-      "hash": "sha256-Bscrt2YFpLDNCq1pMLadS6991dgGz8QJuCQZEJlwDmY="
-    },
-    {
-      "path": "cffi-2.1.1-cp315-cp315t-win_amd64.whl",
-      "url": "https://files.pythonhosted.org/packages/9b/b5/ba2b299993c26577d529b6ae29841f9e15b9fcf004d65f423f4fcf94ade9/cffi-2.1.1-cp315-cp315t-win_amd64.whl",
-      "mirrors": [],
-      "hash": "sha256-2cJ16qzSSqc/lP/W3gj8P5MkJNi2w3b0vtfN43b+e8M="
-    },
-    {
-      "path": "cffi-2.1.1-cp315-cp315t-win_arm64.whl",
-      "url": "https://files.pythonhosted.org/packages/aa/29/35e016098c814cd93de9cd320c66b5bfba14dc6ecedd3cb518fa7c408c69/cffi-2.1.1-cp315-cp315t-win_arm64.whl",
-      "mirrors": [],
-      "hash": "sha256-0Y5awPLwP09RjT4j2w8MrX+qHahiDpwJRh1EO79uZpI="
-    },
-    {
-      "path": "cffi-2.1.1.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/9e/ef/008a1939e372c06329a3fce4279c02f328488f3526744906eeec3da7ad5f/cffi-2.1.1.tar.gz",
-      "mirrors": [],
-      "hash": "sha256-3TH1LqEIZRO7nfMPj87puJGDI64Gej1beLyCagAHEr4="
-    },
-    {
-      "path": "colorama-0.4.6-py2.py3-none-any.whl",
-      "url": "https://files.pythonhosted.org/packages/d1/d6/3965ed04c63042e047cb6a3e6ed1a63a35087b6a609aa3a15ed8ac56c221/colorama-0.4.6-py2.py3-none-any.whl",
-      "mirrors": [],
-      "hash": "sha256-Tx2ZkfWswMoRn51ENiC3f51rM3A+UQEcFrr1evsoX8Y="
-    },
-    {
-      "path": "colorama-0.4.6.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/d8/53/6f443c9a4a8358a93a6792e2acffb9d9d5cb0a5cfd8802644b7b1c9a02e4/colorama-0.4.6.tar.gz",
-      "mirrors": [],
-      "hash": "sha256-CGlfXLftbgUxogVyaXKXJzxHuMrlpj/8bW7VwgG+bkQ="
-    },
-    {
       "path": "cython-3.3.0-cp311-cp311-macosx_11_0_arm64.whl",
       "url": "https://files.pythonhosted.org/packages/af/67/dffaf12b7203f7e936d98b967e065c50a7883f152c51ded44ed8762128f4/cython-3.3.0-cp311-cp311-macosx_11_0_arm64.whl",
       "mirrors": [],
@@ -754,18 +190,6 @@
       "hash": "sha256-7tDZP7ynCH8UO0LDSwWoJYSb3xfxAVcsIQWs+kmqiLg="
     },
     {
-      "path": "filelock-3.32.7-py3-none-any.whl",
-      "url": "https://files.pythonhosted.org/packages/15/df/31098c5aeb4d966b553641472bd55fcf5fdfac953549894b8a765ba44e91/filelock-3.32.7-py3-none-any.whl",
-      "mirrors": [],
-      "hash": "sha256-Zf8NAZDqQgOLMr2kt3g0+wW+LK1MW5sBqk37NhRTblI="
-    },
-    {
-      "path": "filelock-3.32.7.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/0f/59/e19834834cb01a32febfbb0f8a23a9088088f5d45991824ff2bc3b5e8acb/filelock-3.32.7.tar.gz",
-      "mirrors": [],
-      "hash": "sha256-N7ij2YEbD5rvfl7FxxuzIN5S31HmypvNb1rYEYdmDac="
-    },
-    {
       "path": "flit_core-3.12.0-py3-none-any.whl",
       "url": "https://files.pythonhosted.org/packages/f2/65/b6ba90634c984a4fcc02c7e3afe523fef500c4980fec67cc27536ee50acf/flit_core-3.12.0-py3-none-any.whl",
       "mirrors": [],
@@ -776,54 +200,6 @@
       "url": "https://files.pythonhosted.org/packages/69/59/b6fc2188dfc7ea4f936cd12b49d707f66a1cb7a1d2c16172963534db741b/flit_core-3.12.0.tar.gz",
       "mirrors": [],
       "hash": "sha256-GPYxANb5Q4XG7VenIHNEPhpxpKy0M5SRYV0PFtb/AbI="
-    },
-    {
-      "path": "h11-0.16.0-py3-none-any.whl",
-      "url": "https://files.pythonhosted.org/packages/04/4b/29cac41a4d98d144bf5f6d33995617b185d14b22401f75ca86f384e87ff1/h11-0.16.0-py3-none-any.whl",
-      "mirrors": [],
-      "hash": "sha256-Y8+LvnUi3jv2WTL9odnCdyBk/7Pa5i1Vky2lSzHLbIY="
-    },
-    {
-      "path": "h11-0.16.0.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/01/ee/02a2c011bdab74c6fb3c75474d40b3052059d95df7e73351460c8588d963/h11-0.16.0.tar.gz",
-      "mirrors": [],
-      "hash": "sha256-TjW5Vs9FeS5MqliF5p+6AL28b/r7+gIDAOVJsgjuX/E="
-    },
-    {
-      "path": "httpcore-1.0.9-py3-none-any.whl",
-      "url": "https://files.pythonhosted.org/packages/7e/f5/f66802a942d491edb555dd61e3a9961140fd64c90bce1eafd741609d334d/httpcore-1.0.9-py3-none-any.whl",
-      "mirrors": [],
-      "hash": "sha256-LUAHRqQGaPyd7JgQI5BytAtEhLZAqMOP1lSgJMehv1U="
-    },
-    {
-      "path": "httpcore-1.0.9.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/06/94/82699a10bca87a5556c9c59b5963f2d039dbd239f25bc2a63907a05a14cb/httpcore-1.0.9.tar.gz",
-      "mirrors": [],
-      "hash": "sha256-bjRGOvU/0qtdgH85mptF6jHD36InbxWiw/AK//bhdug="
-    },
-    {
-      "path": "httpx-0.28.1-py3-none-any.whl",
-      "url": "https://files.pythonhosted.org/packages/2a/39/e50c7c3a983047577ee07d2a9e53faf5a69493943ec3f6a384bdc792deb2/httpx-0.28.1-py3-none-any.whl",
-      "mirrors": [],
-      "hash": "sha256-2Qn8zMEQ+Mf6+BTKgqmk2Ba8Wm2/6iXWWR1phbi6Wa0="
-    },
-    {
-      "path": "httpx-0.28.1.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/b1/df/48c586a5fe32a0f01324ee087459e112ebb7224f646c0b5023f5e79e9956/httpx-0.28.1.tar.gz",
-      "mirrors": [],
-      "hash": "sha256-demMXxaw81tWeFb1l/Bv8icKN0RwpcI5IkJSjj4+Qvw="
-    },
-    {
-      "path": "idna-3.20-py3-none-any.whl",
-      "url": "https://files.pythonhosted.org/packages/58/a2/bb081bab032533a855d44de1d56f8e8426114ff1ba5d1f07a438a0a654f8/idna-3.20-py3-none-any.whl",
-      "mirrors": [],
-      "hash": "sha256-q3rnEil0VTNw8L25GeGpYLLNG8HvAnZBbYltuBwUWCw="
-    },
-    {
-      "path": "idna-3.20.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/f5/08/8eea9d4b8302028f3abb2c0813953f7aec26d33b7a8960ed760e65ff29fa/idna-3.20.tar.gz",
-      "mirrors": [],
-      "hash": "sha256-p9uFACW5Xe0eropGGBoabFbJLJbw4rAF2f+NwCEMq0Q="
     },
     {
       "path": "maturin-1.16.0-py3-none-linux_armv6l.whl",
@@ -910,18 +286,6 @@
       "hash": "sha256-E+acoSVCmZ2MVGcTHecqSbt25MKEuaRcV4PffA/LOoo="
     },
     {
-      "path": "platformdirs-4.14.2-py3-none-any.whl",
-      "url": "https://files.pythonhosted.org/packages/0b/2d/98af31fdcd7c95c7114e2eb7c2eb0fa55d2a012c37ba4eb3722b7272abcb/platformdirs-4.14.2-py3-none-any.whl",
-      "mirrors": [],
-      "hash": "sha256-3B+TOQ8qkmXkTlr8hmfsf69zdzlgTjm8U4/siJcgw2s="
-    },
-    {
-      "path": "platformdirs-4.14.2.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/6e/4e/2684728d9f2c8c4110738dcadca7e0bed4b60c8dc68c40c2a9e0cf017900/platformdirs-4.14.2.tar.gz",
-      "mirrors": [],
-      "hash": "sha256-bRO0wdZrdUjc7J49sTwbqdmttlBBtdB4aTE6/Afm5Bs="
-    },
-    {
       "path": "puccinialin-0.1.14-py3-none-any.whl",
       "url": "https://files.pythonhosted.org/packages/7c/a8/9333b5bf6ece3124b94560be93b56addecaade70bb81c31c3fbf49a39dd5/puccinialin-0.1.14-py3-none-any.whl",
       "mirrors": [],
@@ -932,18 +296,6 @@
       "url": "https://files.pythonhosted.org/packages/27/2d/6a096277eca8815d2192bcedef1b6605ac9fdd8b7c84115ee876be634bc6/puccinialin-0.1.14.tar.gz",
       "mirrors": [],
       "hash": "sha256-wYbTqybOzq5wn37bemIOpR5G++609Y0t5xfEheUHkUs="
-    },
-    {
-      "path": "pycparser-3.12-py3-none-any.whl",
-      "url": "https://files.pythonhosted.org/packages/b6/ae/315bbeee126a769cbde43cf4908acb4b40408d8bf8bbf334dd7368d8dadf/pycparser-3.12-py3-none-any.whl",
-      "mirrors": [],
-      "hash": "sha256-oHbz9Imzm0PtE1Y6Ha/kJEdEW+wuKUFU7FxX/N2kyF4="
-    },
-    {
-      "path": "pycparser-3.12.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/cb/27/eeb9f307bf07060f3d9f9aa0fb8c15b01bdfded0a941e4b2719c7f94cacd/pycparser-3.12.tar.gz",
-      "mirrors": [],
-      "hash": "sha256-8DOHh36rgs4Bu9/QunJS7lWpCxxwjVEp4s6RVHXPHbY="
     },
     {
       "path": "semantic_version-2.10.0-py2.py3-none-any.whl",
@@ -992,18 +344,6 @@
       "url": "https://files.pythonhosted.org/packages/0d/ea/b2a5bd54b28a324dae8211928b2d730b6547500342c7e6c6dea08bd0a485/tqdm-4.70.1.tar.gz",
       "mirrors": [],
       "hash": "sha256-zv0OyhGyo3o67ndlRNT0rpE/AmiBNbVVa4eI36R0r8Q="
-    },
-    {
-      "path": "typing_extensions-4.16.0-py3-none-any.whl",
-      "url": "https://files.pythonhosted.org/packages/49/d3/b8441a820a491ddfc024b0b0cf0393375b75ea13866d9c66727e54c2fc80/typing_extensions-4.16.0-py3-none-any.whl",
-      "mirrors": [],
-      "hash": "sha256-SByqSBN06BPBsXatoU6X8fZ6RTnOnP6z81DXjWNwwug="
-    },
-    {
-      "path": "typing_extensions-4.16.0.tar.gz",
-      "url": "https://files.pythonhosted.org/packages/f6/cc/6253133b5bb138fc3306cebfbda2c520f545d36b5be2c7255cc528bb45d6/typing_extensions-4.16.0.tar.gz",
-      "mirrors": [],
-      "hash": "sha256-3Jg9GaUJyU26ci7mq9M5QPfAWoniQ8R+kH60228aQ+U="
     }
   ],
   "buildRequirements": [
@@ -1015,19 +355,19 @@
       "packages": [
         {
           "name": "anyio",
-          "version": "4.15.1",
+          "version": "4.14.2",
           "wheels": [
-            "anyio-4.15.1-py3-none-any.whl"
+            "anyio-4.14.2-py3-none-any.whl"
           ],
-          "sdist": "anyio-4.15.1.tar.gz"
+          "sdist": "anyio-4.14.2.tar.gz"
         },
         {
           "name": "certifi",
-          "version": "2026.10.23",
+          "version": "2026.7.22",
           "wheels": [
-            "certifi-2026.10.23-py3-none-any.whl"
+            "certifi-2026.7.22-py3-none-any.whl"
           ],
-          "sdist": "certifi-2026.10.23.tar.gz"
+          "sdist": "certifi-2026.7.22.tar.gz"
         },
         {
           "name": "colorama",
@@ -1039,11 +379,11 @@
         },
         {
           "name": "filelock",
-          "version": "3.32.7",
+          "version": "3.32.2",
           "wheels": [
-            "filelock-3.32.7-py3-none-any.whl"
+            "filelock-3.32.2-py3-none-any.whl"
           ],
-          "sdist": "filelock-3.32.7.tar.gz"
+          "sdist": "filelock-3.32.2.tar.gz"
         },
         {
           "name": "h11",
@@ -1071,11 +411,11 @@
         },
         {
           "name": "idna",
-          "version": "3.20",
+          "version": "3.18",
           "wheels": [
-            "idna-3.20-py3-none-any.whl"
+            "idna-3.18-py3-none-any.whl"
           ],
-          "sdist": "idna-3.20.tar.gz"
+          "sdist": "idna-3.18.tar.gz"
         },
         {
           "name": "maturin",
@@ -1099,11 +439,11 @@
         },
         {
           "name": "platformdirs",
-          "version": "4.14.2",
+          "version": "4.11.0",
           "wheels": [
-            "platformdirs-4.14.2-py3-none-any.whl"
+            "platformdirs-4.11.0-py3-none-any.whl"
           ],
-          "sdist": "platformdirs-4.14.2.tar.gz"
+          "sdist": "platformdirs-4.11.0.tar.gz"
         },
         {
           "name": "puccinialin",
@@ -1156,113 +496,113 @@
       "packages": [
         {
           "name": "anyio",
-          "version": "4.15.1",
+          "version": "4.14.2",
           "wheels": [
-            "anyio-4.15.1-py3-none-any.whl"
+            "anyio-4.14.2-py3-none-any.whl"
           ],
-          "sdist": "anyio-4.15.1.tar.gz"
+          "sdist": "anyio-4.14.2.tar.gz"
         },
         {
           "name": "certifi",
-          "version": "2026.10.23",
+          "version": "2026.7.22",
           "wheels": [
-            "certifi-2026.10.23-py3-none-any.whl"
+            "certifi-2026.7.22-py3-none-any.whl"
           ],
-          "sdist": "certifi-2026.10.23.tar.gz"
+          "sdist": "certifi-2026.7.22.tar.gz"
         },
         {
           "name": "cffi",
-          "version": "2.1.1",
+          "version": "2.1.0",
           "wheels": [
-            "cffi-2.1.1-cp311-cp311-macosx_10_15_x86_64.whl",
-            "cffi-2.1.1-cp311-cp311-macosx_11_0_arm64.whl",
-            "cffi-2.1.1-cp311-cp311-manylinux1_i686.manylinux2014_i686.manylinux_2_17_i686.manylinux_2_5_i686.whl",
-            "cffi-2.1.1-cp311-cp311-manylinux2014_aarch64.manylinux_2_17_aarch64.whl",
-            "cffi-2.1.1-cp311-cp311-manylinux2014_ppc64le.manylinux_2_17_ppc64le.whl",
-            "cffi-2.1.1-cp311-cp311-manylinux2014_s390x.manylinux_2_17_s390x.whl",
-            "cffi-2.1.1-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.whl",
-            "cffi-2.1.1-cp311-cp311-musllinux_1_2_aarch64.whl",
-            "cffi-2.1.1-cp311-cp311-musllinux_1_2_i686.whl",
-            "cffi-2.1.1-cp311-cp311-musllinux_1_2_x86_64.whl",
-            "cffi-2.1.1-cp311-cp311-win32.whl",
-            "cffi-2.1.1-cp311-cp311-win_amd64.whl",
-            "cffi-2.1.1-cp311-cp311-win_arm64.whl",
-            "cffi-2.1.1-cp312-cp312-macosx_10_15_x86_64.whl",
-            "cffi-2.1.1-cp312-cp312-macosx_11_0_arm64.whl",
-            "cffi-2.1.1-cp312-cp312-manylinux1_i686.manylinux2014_i686.manylinux_2_17_i686.manylinux_2_5_i686.whl",
-            "cffi-2.1.1-cp312-cp312-manylinux2014_aarch64.manylinux_2_17_aarch64.whl",
-            "cffi-2.1.1-cp312-cp312-manylinux2014_ppc64le.manylinux_2_17_ppc64le.whl",
-            "cffi-2.1.1-cp312-cp312-manylinux2014_s390x.manylinux_2_17_s390x.whl",
-            "cffi-2.1.1-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.whl",
-            "cffi-2.1.1-cp312-cp312-musllinux_1_2_aarch64.whl",
-            "cffi-2.1.1-cp312-cp312-musllinux_1_2_x86_64.whl",
-            "cffi-2.1.1-cp312-cp312-win32.whl",
-            "cffi-2.1.1-cp312-cp312-win_amd64.whl",
-            "cffi-2.1.1-cp312-cp312-win_arm64.whl",
-            "cffi-2.1.1-cp313-cp313-ios_13_0_arm64_iphoneos.whl",
-            "cffi-2.1.1-cp313-cp313-ios_13_0_arm64_iphonesimulator.whl",
-            "cffi-2.1.1-cp313-cp313-macosx_10_15_x86_64.whl",
-            "cffi-2.1.1-cp313-cp313-macosx_11_0_arm64.whl",
-            "cffi-2.1.1-cp313-cp313-manylinux1_i686.manylinux2014_i686.manylinux_2_17_i686.manylinux_2_5_i686.whl",
-            "cffi-2.1.1-cp313-cp313-manylinux2014_aarch64.manylinux_2_17_aarch64.whl",
-            "cffi-2.1.1-cp313-cp313-manylinux2014_ppc64le.manylinux_2_17_ppc64le.whl",
-            "cffi-2.1.1-cp313-cp313-manylinux2014_s390x.manylinux_2_17_s390x.whl",
-            "cffi-2.1.1-cp313-cp313-manylinux2014_x86_64.manylinux_2_17_x86_64.whl",
-            "cffi-2.1.1-cp313-cp313-musllinux_1_2_aarch64.whl",
-            "cffi-2.1.1-cp313-cp313-musllinux_1_2_x86_64.whl",
-            "cffi-2.1.1-cp313-cp313-win32.whl",
-            "cffi-2.1.1-cp313-cp313-win_amd64.whl",
-            "cffi-2.1.1-cp313-cp313-win_arm64.whl",
-            "cffi-2.1.1-cp314-cp314-ios_13_0_arm64_iphoneos.whl",
-            "cffi-2.1.1-cp314-cp314-ios_13_0_arm64_iphonesimulator.whl",
-            "cffi-2.1.1-cp314-cp314-macosx_10_15_x86_64.whl",
-            "cffi-2.1.1-cp314-cp314-macosx_11_0_arm64.whl",
-            "cffi-2.1.1-cp314-cp314-manylinux2014_aarch64.manylinux_2_17_aarch64.whl",
-            "cffi-2.1.1-cp314-cp314-manylinux2014_ppc64le.manylinux_2_17_ppc64le.whl",
-            "cffi-2.1.1-cp314-cp314-manylinux2014_s390x.manylinux_2_17_s390x.whl",
-            "cffi-2.1.1-cp314-cp314-manylinux2014_x86_64.manylinux_2_17_x86_64.whl",
-            "cffi-2.1.1-cp314-cp314-musllinux_1_2_aarch64.whl",
-            "cffi-2.1.1-cp314-cp314-musllinux_1_2_x86_64.whl",
-            "cffi-2.1.1-cp314-cp314-win32.whl",
-            "cffi-2.1.1-cp314-cp314-win_amd64.whl",
-            "cffi-2.1.1-cp314-cp314-win_arm64.whl",
-            "cffi-2.1.1-cp314-cp314t-macosx_10_15_x86_64.whl",
-            "cffi-2.1.1-cp314-cp314t-macosx_11_0_arm64.whl",
-            "cffi-2.1.1-cp314-cp314t-manylinux2014_aarch64.manylinux_2_17_aarch64.whl",
-            "cffi-2.1.1-cp314-cp314t-manylinux2014_ppc64le.manylinux_2_17_ppc64le.whl",
-            "cffi-2.1.1-cp314-cp314t-manylinux2014_s390x.manylinux_2_17_s390x.whl",
-            "cffi-2.1.1-cp314-cp314t-manylinux2014_x86_64.manylinux_2_17_x86_64.whl",
-            "cffi-2.1.1-cp314-cp314t-musllinux_1_2_aarch64.whl",
-            "cffi-2.1.1-cp314-cp314t-musllinux_1_2_x86_64.whl",
-            "cffi-2.1.1-cp314-cp314t-win32.whl",
-            "cffi-2.1.1-cp314-cp314t-win_amd64.whl",
-            "cffi-2.1.1-cp314-cp314t-win_arm64.whl",
-            "cffi-2.1.1-cp315-cp315-ios_13_0_arm64_iphoneos.whl",
-            "cffi-2.1.1-cp315-cp315-ios_13_0_arm64_iphonesimulator.whl",
-            "cffi-2.1.1-cp315-cp315-macosx_10_15_x86_64.whl",
-            "cffi-2.1.1-cp315-cp315-macosx_11_0_arm64.whl",
-            "cffi-2.1.1-cp315-cp315-manylinux2014_aarch64.manylinux_2_17_aarch64.whl",
-            "cffi-2.1.1-cp315-cp315-manylinux2014_ppc64le.manylinux_2_17_ppc64le.whl",
-            "cffi-2.1.1-cp315-cp315-manylinux2014_s390x.manylinux_2_17_s390x.whl",
-            "cffi-2.1.1-cp315-cp315-manylinux2014_x86_64.manylinux_2_17_x86_64.whl",
-            "cffi-2.1.1-cp315-cp315-musllinux_1_2_aarch64.whl",
-            "cffi-2.1.1-cp315-cp315-musllinux_1_2_x86_64.whl",
-            "cffi-2.1.1-cp315-cp315-win32.whl",
-            "cffi-2.1.1-cp315-cp315-win_amd64.whl",
-            "cffi-2.1.1-cp315-cp315-win_arm64.whl",
-            "cffi-2.1.1-cp315-cp315t-macosx_10_15_x86_64.whl",
-            "cffi-2.1.1-cp315-cp315t-macosx_11_0_arm64.whl",
-            "cffi-2.1.1-cp315-cp315t-manylinux2014_aarch64.manylinux_2_17_aarch64.whl",
-            "cffi-2.1.1-cp315-cp315t-manylinux2014_ppc64le.manylinux_2_17_ppc64le.whl",
-            "cffi-2.1.1-cp315-cp315t-manylinux2014_s390x.manylinux_2_17_s390x.whl",
-            "cffi-2.1.1-cp315-cp315t-manylinux2014_x86_64.manylinux_2_17_x86_64.whl",
-            "cffi-2.1.1-cp315-cp315t-musllinux_1_2_aarch64.whl",
-            "cffi-2.1.1-cp315-cp315t-musllinux_1_2_x86_64.whl",
-            "cffi-2.1.1-cp315-cp315t-win32.whl",
-            "cffi-2.1.1-cp315-cp315t-win_amd64.whl",
-            "cffi-2.1.1-cp315-cp315t-win_arm64.whl"
+            "cffi-2.1.0-cp311-cp311-macosx_10_15_x86_64.whl",
+            "cffi-2.1.0-cp311-cp311-macosx_11_0_arm64.whl",
+            "cffi-2.1.0-cp311-cp311-manylinux1_i686.manylinux2014_i686.manylinux_2_17_i686.manylinux_2_5_i686.whl",
+            "cffi-2.1.0-cp311-cp311-manylinux2014_aarch64.manylinux_2_17_aarch64.whl",
+            "cffi-2.1.0-cp311-cp311-manylinux2014_ppc64le.manylinux_2_17_ppc64le.whl",
+            "cffi-2.1.0-cp311-cp311-manylinux2014_s390x.manylinux_2_17_s390x.whl",
+            "cffi-2.1.0-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.whl",
+            "cffi-2.1.0-cp311-cp311-musllinux_1_2_aarch64.whl",
+            "cffi-2.1.0-cp311-cp311-musllinux_1_2_i686.whl",
+            "cffi-2.1.0-cp311-cp311-musllinux_1_2_x86_64.whl",
+            "cffi-2.1.0-cp311-cp311-win32.whl",
+            "cffi-2.1.0-cp311-cp311-win_amd64.whl",
+            "cffi-2.1.0-cp311-cp311-win_arm64.whl",
+            "cffi-2.1.0-cp312-cp312-macosx_10_15_x86_64.whl",
+            "cffi-2.1.0-cp312-cp312-macosx_11_0_arm64.whl",
+            "cffi-2.1.0-cp312-cp312-manylinux1_i686.manylinux2014_i686.manylinux_2_17_i686.manylinux_2_5_i686.whl",
+            "cffi-2.1.0-cp312-cp312-manylinux2014_aarch64.manylinux_2_17_aarch64.whl",
+            "cffi-2.1.0-cp312-cp312-manylinux2014_ppc64le.manylinux_2_17_ppc64le.whl",
+            "cffi-2.1.0-cp312-cp312-manylinux2014_s390x.manylinux_2_17_s390x.whl",
+            "cffi-2.1.0-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.whl",
+            "cffi-2.1.0-cp312-cp312-musllinux_1_2_aarch64.whl",
+            "cffi-2.1.0-cp312-cp312-musllinux_1_2_x86_64.whl",
+            "cffi-2.1.0-cp312-cp312-win32.whl",
+            "cffi-2.1.0-cp312-cp312-win_amd64.whl",
+            "cffi-2.1.0-cp312-cp312-win_arm64.whl",
+            "cffi-2.1.0-cp313-cp313-ios_13_0_arm64_iphoneos.whl",
+            "cffi-2.1.0-cp313-cp313-ios_13_0_arm64_iphonesimulator.whl",
+            "cffi-2.1.0-cp313-cp313-macosx_10_15_x86_64.whl",
+            "cffi-2.1.0-cp313-cp313-macosx_11_0_arm64.whl",
+            "cffi-2.1.0-cp313-cp313-manylinux1_i686.manylinux2014_i686.manylinux_2_17_i686.manylinux_2_5_i686.whl",
+            "cffi-2.1.0-cp313-cp313-manylinux2014_aarch64.manylinux_2_17_aarch64.whl",
+            "cffi-2.1.0-cp313-cp313-manylinux2014_ppc64le.manylinux_2_17_ppc64le.whl",
+            "cffi-2.1.0-cp313-cp313-manylinux2014_s390x.manylinux_2_17_s390x.whl",
+            "cffi-2.1.0-cp313-cp313-manylinux2014_x86_64.manylinux_2_17_x86_64.whl",
+            "cffi-2.1.0-cp313-cp313-musllinux_1_2_aarch64.whl",
+            "cffi-2.1.0-cp313-cp313-musllinux_1_2_x86_64.whl",
+            "cffi-2.1.0-cp313-cp313-win32.whl",
+            "cffi-2.1.0-cp313-cp313-win_amd64.whl",
+            "cffi-2.1.0-cp313-cp313-win_arm64.whl",
+            "cffi-2.1.0-cp314-cp314-ios_13_0_arm64_iphoneos.whl",
+            "cffi-2.1.0-cp314-cp314-ios_13_0_arm64_iphonesimulator.whl",
+            "cffi-2.1.0-cp314-cp314-macosx_10_15_x86_64.whl",
+            "cffi-2.1.0-cp314-cp314-macosx_11_0_arm64.whl",
+            "cffi-2.1.0-cp314-cp314-manylinux2014_aarch64.manylinux_2_17_aarch64.whl",
+            "cffi-2.1.0-cp314-cp314-manylinux2014_ppc64le.manylinux_2_17_ppc64le.whl",
+            "cffi-2.1.0-cp314-cp314-manylinux2014_s390x.manylinux_2_17_s390x.whl",
+            "cffi-2.1.0-cp314-cp314-manylinux2014_x86_64.manylinux_2_17_x86_64.whl",
+            "cffi-2.1.0-cp314-cp314-musllinux_1_2_aarch64.whl",
+            "cffi-2.1.0-cp314-cp314-musllinux_1_2_x86_64.whl",
+            "cffi-2.1.0-cp314-cp314-win32.whl",
+            "cffi-2.1.0-cp314-cp314-win_amd64.whl",
+            "cffi-2.1.0-cp314-cp314-win_arm64.whl",
+            "cffi-2.1.0-cp314-cp314t-macosx_10_15_x86_64.whl",
+            "cffi-2.1.0-cp314-cp314t-macosx_11_0_arm64.whl",
+            "cffi-2.1.0-cp314-cp314t-manylinux2014_aarch64.manylinux_2_17_aarch64.whl",
+            "cffi-2.1.0-cp314-cp314t-manylinux2014_ppc64le.manylinux_2_17_ppc64le.whl",
+            "cffi-2.1.0-cp314-cp314t-manylinux2014_s390x.manylinux_2_17_s390x.whl",
+            "cffi-2.1.0-cp314-cp314t-manylinux2014_x86_64.manylinux_2_17_x86_64.whl",
+            "cffi-2.1.0-cp314-cp314t-musllinux_1_2_aarch64.whl",
+            "cffi-2.1.0-cp314-cp314t-musllinux_1_2_x86_64.whl",
+            "cffi-2.1.0-cp314-cp314t-win32.whl",
+            "cffi-2.1.0-cp314-cp314t-win_amd64.whl",
+            "cffi-2.1.0-cp314-cp314t-win_arm64.whl",
+            "cffi-2.1.0-cp315-cp315-ios_13_0_arm64_iphoneos.whl",
+            "cffi-2.1.0-cp315-cp315-ios_13_0_arm64_iphonesimulator.whl",
+            "cffi-2.1.0-cp315-cp315-macosx_10_15_x86_64.whl",
+            "cffi-2.1.0-cp315-cp315-macosx_11_0_arm64.whl",
+            "cffi-2.1.0-cp315-cp315-manylinux2014_aarch64.manylinux_2_17_aarch64.whl",
+            "cffi-2.1.0-cp315-cp315-manylinux2014_ppc64le.manylinux_2_17_ppc64le.whl",
+            "cffi-2.1.0-cp315-cp315-manylinux2014_s390x.manylinux_2_17_s390x.whl",
+            "cffi-2.1.0-cp315-cp315-manylinux2014_x86_64.manylinux_2_17_x86_64.whl",
+            "cffi-2.1.0-cp315-cp315-musllinux_1_2_aarch64.whl",
+            "cffi-2.1.0-cp315-cp315-musllinux_1_2_x86_64.whl",
+            "cffi-2.1.0-cp315-cp315-win32.whl",
+            "cffi-2.1.0-cp315-cp315-win_amd64.whl",
+            "cffi-2.1.0-cp315-cp315-win_arm64.whl",
+            "cffi-2.1.0-cp315-cp315t-macosx_10_15_x86_64.whl",
+            "cffi-2.1.0-cp315-cp315t-macosx_11_0_arm64.whl",
+            "cffi-2.1.0-cp315-cp315t-manylinux2014_aarch64.manylinux_2_17_aarch64.whl",
+            "cffi-2.1.0-cp315-cp315t-manylinux2014_ppc64le.manylinux_2_17_ppc64le.whl",
+            "cffi-2.1.0-cp315-cp315t-manylinux2014_s390x.manylinux_2_17_s390x.whl",
+            "cffi-2.1.0-cp315-cp315t-manylinux2014_x86_64.manylinux_2_17_x86_64.whl",
+            "cffi-2.1.0-cp315-cp315t-musllinux_1_2_aarch64.whl",
+            "cffi-2.1.0-cp315-cp315t-musllinux_1_2_x86_64.whl",
+            "cffi-2.1.0-cp315-cp315t-win32.whl",
+            "cffi-2.1.0-cp315-cp315t-win_amd64.whl",
+            "cffi-2.1.0-cp315-cp315t-win_arm64.whl"
           ],
-          "sdist": "cffi-2.1.1.tar.gz"
+          "sdist": "cffi-2.1.0.tar.gz"
         },
         {
           "name": "colorama",
@@ -1274,11 +614,11 @@
         },
         {
           "name": "filelock",
-          "version": "3.32.7",
+          "version": "3.32.2",
           "wheels": [
-            "filelock-3.32.7-py3-none-any.whl"
+            "filelock-3.32.2-py3-none-any.whl"
           ],
-          "sdist": "filelock-3.32.7.tar.gz"
+          "sdist": "filelock-3.32.2.tar.gz"
         },
         {
           "name": "h11",
@@ -1306,11 +646,11 @@
         },
         {
           "name": "idna",
-          "version": "3.20",
+          "version": "3.18",
           "wheels": [
-            "idna-3.20-py3-none-any.whl"
+            "idna-3.18-py3-none-any.whl"
           ],
-          "sdist": "idna-3.20.tar.gz"
+          "sdist": "idna-3.18.tar.gz"
         },
         {
           "name": "maturin",
@@ -1334,11 +674,11 @@
         },
         {
           "name": "platformdirs",
-          "version": "4.14.2",
+          "version": "4.11.0",
           "wheels": [
-            "platformdirs-4.14.2-py3-none-any.whl"
+            "platformdirs-4.11.0-py3-none-any.whl"
           ],
-          "sdist": "platformdirs-4.14.2.tar.gz"
+          "sdist": "platformdirs-4.11.0.tar.gz"
         },
         {
           "name": "puccinialin",
@@ -1350,11 +690,11 @@
         },
         {
           "name": "pycparser",
-          "version": "3.12",
+          "version": "3.0",
           "wheels": [
-            "pycparser-3.12-py3-none-any.whl"
+            "pycparser-3.0-py3-none-any.whl"
           ],
-          "sdist": "pycparser-3.12.tar.gz"
+          "sdist": "pycparser-3.0.tar.gz"
         },
         {
           "name": "setuptools",
@@ -1474,19 +814,19 @@
       "packages": [
         {
           "name": "anyio",
-          "version": "4.15.1",
+          "version": "4.14.2",
           "wheels": [
-            "anyio-4.15.1-py3-none-any.whl"
+            "anyio-4.14.2-py3-none-any.whl"
           ],
-          "sdist": "anyio-4.15.1.tar.gz"
+          "sdist": "anyio-4.14.2.tar.gz"
         },
         {
           "name": "certifi",
-          "version": "2026.10.23",
+          "version": "2026.7.22",
           "wheels": [
-            "certifi-2026.10.23-py3-none-any.whl"
+            "certifi-2026.7.22-py3-none-any.whl"
           ],
-          "sdist": "certifi-2026.10.23.tar.gz"
+          "sdist": "certifi-2026.7.22.tar.gz"
         },
         {
           "name": "colorama",
@@ -1498,11 +838,11 @@
         },
         {
           "name": "filelock",
-          "version": "3.32.7",
+          "version": "3.32.2",
           "wheels": [
-            "filelock-3.32.7-py3-none-any.whl"
+            "filelock-3.32.2-py3-none-any.whl"
           ],
-          "sdist": "filelock-3.32.7.tar.gz"
+          "sdist": "filelock-3.32.2.tar.gz"
         },
         {
           "name": "h11",
@@ -1530,11 +870,11 @@
         },
         {
           "name": "idna",
-          "version": "3.20",
+          "version": "3.18",
           "wheels": [
-            "idna-3.20-py3-none-any.whl"
+            "idna-3.18-py3-none-any.whl"
           ],
-          "sdist": "idna-3.20.tar.gz"
+          "sdist": "idna-3.18.tar.gz"
         },
         {
           "name": "maturin",
@@ -1558,11 +898,11 @@
         },
         {
           "name": "platformdirs",
-          "version": "4.14.2",
+          "version": "4.11.0",
           "wheels": [
-            "platformdirs-4.14.2-py3-none-any.whl"
+            "platformdirs-4.11.0-py3-none-any.whl"
           ],
-          "sdist": "platformdirs-4.14.2.tar.gz"
+          "sdist": "platformdirs-4.11.0.tar.gz"
         },
         {
           "name": "puccinialin",
@@ -1598,19 +938,19 @@
       "packages": [
         {
           "name": "anyio",
-          "version": "4.15.1",
+          "version": "4.14.2",
           "wheels": [
-            "anyio-4.15.1-py3-none-any.whl"
+            "anyio-4.14.2-py3-none-any.whl"
           ],
-          "sdist": "anyio-4.15.1.tar.gz"
+          "sdist": "anyio-4.14.2.tar.gz"
         },
         {
           "name": "certifi",
-          "version": "2026.10.23",
+          "version": "2026.7.22",
           "wheels": [
-            "certifi-2026.10.23-py3-none-any.whl"
+            "certifi-2026.7.22-py3-none-any.whl"
           ],
-          "sdist": "certifi-2026.10.23.tar.gz"
+          "sdist": "certifi-2026.7.22.tar.gz"
         },
         {
           "name": "colorama",
@@ -1622,11 +962,11 @@
         },
         {
           "name": "filelock",
-          "version": "3.32.7",
+          "version": "3.32.2",
           "wheels": [
-            "filelock-3.32.7-py3-none-any.whl"
+            "filelock-3.32.2-py3-none-any.whl"
           ],
-          "sdist": "filelock-3.32.7.tar.gz"
+          "sdist": "filelock-3.32.2.tar.gz"
         },
         {
           "name": "h11",
@@ -1654,11 +994,11 @@
         },
         {
           "name": "idna",
-          "version": "3.20",
+          "version": "3.18",
           "wheels": [
-            "idna-3.20-py3-none-any.whl"
+            "idna-3.18-py3-none-any.whl"
           ],
-          "sdist": "idna-3.20.tar.gz"
+          "sdist": "idna-3.18.tar.gz"
         },
         {
           "name": "maturin",
@@ -1682,11 +1022,11 @@
         },
         {
           "name": "platformdirs",
-          "version": "4.14.2",
+          "version": "4.11.0",
           "wheels": [
-            "platformdirs-4.14.2-py3-none-any.whl"
+            "platformdirs-4.11.0-py3-none-any.whl"
           ],
-          "sdist": "platformdirs-4.14.2.tar.gz"
+          "sdist": "platformdirs-4.11.0.tar.gz"
         },
         {
           "name": "puccinialin",
@@ -1722,19 +1062,19 @@
       "packages": [
         {
           "name": "anyio",
-          "version": "4.15.1",
+          "version": "4.14.2",
           "wheels": [
-            "anyio-4.15.1-py3-none-any.whl"
+            "anyio-4.14.2-py3-none-any.whl"
           ],
-          "sdist": "anyio-4.15.1.tar.gz"
+          "sdist": "anyio-4.14.2.tar.gz"
         },
         {
           "name": "certifi",
-          "version": "2026.10.23",
+          "version": "2026.7.22",
           "wheels": [
-            "certifi-2026.10.23-py3-none-any.whl"
+            "certifi-2026.7.22-py3-none-any.whl"
           ],
-          "sdist": "certifi-2026.10.23.tar.gz"
+          "sdist": "certifi-2026.7.22.tar.gz"
         },
         {
           "name": "colorama",
@@ -1746,11 +1086,11 @@
         },
         {
           "name": "filelock",
-          "version": "3.32.7",
+          "version": "3.32.2",
           "wheels": [
-            "filelock-3.32.7-py3-none-any.whl"
+            "filelock-3.32.2-py3-none-any.whl"
           ],
-          "sdist": "filelock-3.32.7.tar.gz"
+          "sdist": "filelock-3.32.2.tar.gz"
         },
         {
           "name": "h11",
@@ -1778,11 +1118,11 @@
         },
         {
           "name": "idna",
-          "version": "3.20",
+          "version": "3.18",
           "wheels": [
-            "idna-3.20-py3-none-any.whl"
+            "idna-3.18-py3-none-any.whl"
           ],
-          "sdist": "idna-3.20.tar.gz"
+          "sdist": "idna-3.18.tar.gz"
         },
         {
           "name": "maturin",
@@ -1806,11 +1146,11 @@
         },
         {
           "name": "platformdirs",
-          "version": "4.14.2",
+          "version": "4.11.0",
           "wheels": [
-            "platformdirs-4.14.2-py3-none-any.whl"
+            "platformdirs-4.11.0-py3-none-any.whl"
           ],
-          "sdist": "platformdirs-4.14.2.tar.gz"
+          "sdist": "platformdirs-4.11.0.tar.gz"
         },
         {
           "name": "puccinialin",
@@ -1848,19 +1188,19 @@
       "packages": [
         {
           "name": "anyio",
-          "version": "4.15.1",
+          "version": "4.14.2",
           "wheels": [
-            "anyio-4.15.1-py3-none-any.whl"
+            "anyio-4.14.2-py3-none-any.whl"
           ],
-          "sdist": "anyio-4.15.1.tar.gz"
+          "sdist": "anyio-4.14.2.tar.gz"
         },
         {
           "name": "certifi",
-          "version": "2026.10.23",
+          "version": "2026.7.22",
           "wheels": [
-            "certifi-2026.10.23-py3-none-any.whl"
+            "certifi-2026.7.22-py3-none-any.whl"
           ],
-          "sdist": "certifi-2026.10.23.tar.gz"
+          "sdist": "certifi-2026.7.22.tar.gz"
         },
         {
           "name": "colorama",
@@ -1872,11 +1212,11 @@
         },
         {
           "name": "filelock",
-          "version": "3.32.7",
+          "version": "3.32.2",
           "wheels": [
-            "filelock-3.32.7-py3-none-any.whl"
+            "filelock-3.32.2-py3-none-any.whl"
           ],
-          "sdist": "filelock-3.32.7.tar.gz"
+          "sdist": "filelock-3.32.2.tar.gz"
         },
         {
           "name": "h11",
@@ -1904,19 +1244,19 @@
         },
         {
           "name": "idna",
-          "version": "3.20",
+          "version": "3.18",
           "wheels": [
-            "idna-3.20-py3-none-any.whl"
+            "idna-3.18-py3-none-any.whl"
           ],
-          "sdist": "idna-3.20.tar.gz"
+          "sdist": "idna-3.18.tar.gz"
         },
         {
           "name": "platformdirs",
-          "version": "4.14.2",
+          "version": "4.11.0",
           "wheels": [
-            "platformdirs-4.14.2-py3-none-any.whl"
+            "platformdirs-4.11.0-py3-none-any.whl"
           ],
-          "sdist": "platformdirs-4.14.2.tar.gz"
+          "sdist": "platformdirs-4.11.0.tar.gz"
         },
         {
           "name": "puccinialin",
@@ -1972,7 +1312,6 @@
   "builds": {
     "ast-serialize==0.6.0": 0,
     "cffi==2.1.0": 1,
-    "cffi==2.1.1": 1,
     "cryptography==49.0.0": 2,
     "flask==3.2.0.dev0": 3,
     "librt==0.13.0": 1,
@@ -1984,14 +1323,6 @@
     "watchfiles==1.2.0": 8
   },
   "sources": {},
-  "outputs": {
-    "flask": {
-      "sdist": "flask-3.2.0.dev0.tar.gz",
-      "wheel": "flask-3.2.0.dev0-py3-none-any.whl",
-      "scripts": [
-        "flask"
-      ]
-    }
-  },
-  "contentHash": "35929ca0f2962cd2cf6e5cf97e69ddf773b954f640df300e2a4d93b61a83a677"
+  "outputs": {},
+  "contentHash": "ea47debd2dacfc9a1d90b33b192411bfb8261f911b340770df083e5cb551c02c"
 }

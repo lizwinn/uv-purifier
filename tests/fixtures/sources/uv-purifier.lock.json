@@ -371,14 +371,6 @@
   "sources": {
     "attrs==25.3.0": "git/attrs-3dca08ce5bbe673d7df25f44f3dda92505d1043d"
   },
-  "outputs": {
-    "sources": {
-      "sdist": "sources-0.1.0.tar.gz",
-      "wheel": "sources-0.1.0-py3-none-any.whl",
-      "scripts": [
-        "sources"
-      ]
-    }
-  },
-  "contentHash": "0dd3b40ea9e7635f49c9c71812381880597b503f3269a4bba2f195a399ff4429"
+  "outputs": {},
+  "contentHash": "2259d758c7ea48ae96f602e7843d74695cb8ce3892643b81206fb40536f15d4d"
 }

@@ -202,14 +202,6 @@
     "simple==0.1.0": 2
   },
   "sources": {},
-  "outputs": {
-    "simple": {
-      "sdist": "simple-0.1.0.tar.gz",
-      "wheel": "simple-0.1.0-py3-none-any.whl",
-      "scripts": [
-        "simple"
-      ]
-    }
-  },
-  "contentHash": "8c094b4d5b2ca1b7ae6fed98ef34319137bf5f2beb6987cd21cfce1bb0fd7134"
+  "outputs": {},
+  "contentHash": "fbee9830484c267100dc59b2c4f5b718662d2cd6130d8918e563f6dc5e125f17"
 }

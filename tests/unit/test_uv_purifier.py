@@ -195,6 +195,27 @@ class BuildRequirements(unittest.TestCase):
             self.assertIsNone(uvp.previous_resolution(path))
 
 
+class DerivedOutputs(unittest.TestCase):
+    """derived_outputs, which the Nix library computes the same way; the
+    lockfile records only what differs from it."""
+
+    def test_names_and_scripts_from_uv_lock_and_pyproject(self):
+        derived = uvp.derived_outputs(
+            {"name": "Zope.Interface-x", "version": "1.0"},
+            {"project": {"scripts": {"b": "m:b", "a": "m:a"}, "gui-scripts": {"c": "m:c"}}},
+        )
+        self.assertEqual(derived["sdist"], "zope_interface_x-1.0.tar.gz")
+        self.assertEqual(derived["wheel"], "zope_interface_x-1.0-py3-none-any.whl")
+        self.assertEqual(derived["scripts"], ["a", "b", "c"])
+
+    def test_dynamic_fields_are_not_derived(self):
+        derived = uvp.derived_outputs(
+            {"name": "app"},
+            {"project": {"dynamic": ["version", "scripts"]}},
+        )
+        self.assertEqual(derived, {"sdist": None, "wheel": None, "scripts": None})
+
+
 class CheckLockfile(unittest.TestCase):
     """check_lockfile, which `sync` and `publish` run before a Nix build, on
     copies of tests/fixtures/simple."""

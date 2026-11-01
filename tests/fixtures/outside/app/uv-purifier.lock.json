@@ -186,14 +186,6 @@
     "shared==0.2.0": 1
   },
   "sources": {},
-  "outputs": {
-    "outside-app": {
-      "sdist": "outside_app-1.0.0.tar.gz",
-      "wheel": "outside_app-1.0.0-py3-none-any.whl",
-      "scripts": [
-        "outside-app"
-      ]
-    }
-  },
-  "contentHash": "f9b8cb6503798d9f11eb6580682b27651b75b4b2e2645b429ab0f5dd1662b7e9"
+  "outputs": {},
+  "contentHash": "c17eb2288e40147e4994a2b00550d381ca9318050353b24f377c17c75f33f1b7"
 }

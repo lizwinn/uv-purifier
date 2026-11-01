@@ -65,19 +65,6 @@
     "greeting==1.0.0": 1
   },
   "sources": {},
-  "outputs": {
-    "app": {
-      "sdist": "app-2.0.0.tar.gz",
-      "wheel": "app-2.0.0-py3-none-any.whl",
-      "scripts": [
-        "app"
-      ]
-    },
-    "greeting": {
-      "sdist": "greeting-1.0.0.tar.gz",
-      "wheel": "greeting-1.0.0-py3-none-any.whl",
-      "scripts": []
-    }
-  },
-  "contentHash": "e0116a650142ff585a5f7d221bc74097bd4d6e97c36c00f27b1c1e6b5a037b44"
+  "outputs": {},
+  "contentHash": "8cebc35df2e0f6c72bdd7707abecf999b582ac0b16f09c5a6fab8659968db682"
 }

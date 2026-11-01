@@ -322,12 +322,49 @@ let
     }
   );
 
-  # What a member's build produces, as `uv-purifier lock` recorded it: the
-  # file names of its sdist and wheel, and the scripts the wheel installs.
+  # What a member's build produces, derived from uv.lock and the member's
+  # pyproject.toml (src/uv_purifier.py, derived_outputs): the sdist and a
+  # pure wheel named after the normalized name and the version uv.lock
+  # records, and the scripts of [project.scripts] and [project.gui-scripts].
+  derivedOutputs =
+    m:
+    let
+      version = memberVersion m;
+      stem = lib.toLower (
+        lib.concatStrings (
+          map (part: if builtins.isList part then "_" else part) (builtins.split "[-_.]+" m.name)
+        )
+      );
+      project =
+        (builtins.fromTOML (builtins.readFile (src + "/${m.path}/pyproject.toml"))).project or { };
+      dynamic = project.dynamic or [ ];
+    in
+    {
+      sdist = if version == "" then null else "${stem}-${version}.tar.gz";
+      wheel = if version == "" then null else "${stem}-${version}-py3-none-any.whl";
+      scripts =
+        if lib.elem "scripts" dynamic || lib.elem "gui-scripts" dynamic then
+          null
+        else
+          lib.sort (a: b: a < b) (
+            lib.unique (
+              builtins.attrNames (project.scripts or { }) ++ builtins.attrNames (project.gui-scripts or { })
+            )
+          );
+    };
+
+  # What a member's build produces: what Nix derives, with what
+  # `uv-purifier lock` recorded where the build makes something else.
   outputsOf =
     m:
-    (lock.purifier.outputs or { }).${m.name}
-      or (throw "uv-purifier: uv-purifier.lock.json records no outputs of ${m.name}. Run `uv-purifier lock`.");
+    let
+      outputs = derivedOutputs m // (lock.purifier.outputs or { }).${m.name} or { };
+      unknown = lib.filter (field: outputs.${field} == null) (builtins.attrNames outputs);
+    in
+    if unknown != [ ] then
+      throw "uv-purifier: uv-purifier.lock.json records no ${lib.concatStringsSep ", " unknown} of ${m.name}. Run `uv-purifier lock`."
+    else
+      outputs;
 
   # The file name of a member's wheel for this system and Python. The lock
   # run built the wheel on its own system, so a compiled wheel's tags are
