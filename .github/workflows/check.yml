@@ -2,9 +2,12 @@
 #
 # Runs every check of the flake on each system it supports, on a runner of
 # that system: `nix flake check` builds the checks of the system it runs on.
-# The relock job relocks every fixture with the network and fails when a
-# lockfile differs from the committed one: a relock reproduces its
-# lockfile byte for byte.
+# Two checks of the purifier contract need what the Nix sandbox does not
+# have, so they are jobs here:
+# - conformance-relock relocks every fixture with the network and fails
+#   when a lockfile differs from the committed one.
+# - conformance-rebuild builds two outputs of a fixture again with
+#   `nix build --rebuild`, which fails when the second build differs.
 name: check
 
 on:
@@ -24,7 +27,7 @@ jobs:
       - uses: cachix/install-nix-action@v31
       - run: nix flake check -L
 
-  relock:
+  conformance-relock:
     strategy:
       fail-fast: false
       matrix:
@@ -35,3 +38,18 @@ jobs:
       - uses: cachix/install-nix-action@v31
       - run: tests/relock-fixtures.sh
       - run: git diff --exit-code
+
+  conformance-rebuild:
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: [ubuntu-latest, ubuntu-24.04-arm]
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: cachix/install-nix-action@v31
+      - run: |
+          system=$(nix eval --raw --impure --expr builtins.currentSystem)
+          checks=(".#checks.$system.rebuild-release" ".#checks.$system.rebuild-package")
+          nix build -L "${checks[@]}"
+          nix build -L --rebuild "${checks[@]}"

@@ -2,19 +2,21 @@
 #
 # What the `uv-purifier` command builds for a project directory given as an
 # absolute path, with the nixpkgs the command was built with:
-# - with `package`, that workspace member's package, which `publish`
+# - with `package`, that workspace member's release, which `publish`
 #   uploads;
-# - without it, the inputs of a development environment, which `sync`
+# - without it, the inputs of a development environment, which `prefetch`
 #   installs into the project's .venv.
 #
-# A local package that uv.lock names by a path outside the project is read
-# from that path.
+# `lockFile`, when given, is the purifier lockfile to build from instead of
+# the one in the project. A local package that uv.lock names by a path
+# outside the project is read from that path.
 {
   nixpkgs,
   # The source of the shared purifier library.
   purifier,
   src,
   package ? null,
+  lockFile ? null,
 }:
 let
   pkgs = import nixpkgs { };
@@ -33,6 +35,7 @@ let
           ".venv"
           "__pycache__"
           "dist"
+          ".uv-purifier"
         ];
     };
 
@@ -63,13 +66,18 @@ let
     if lib.pathIsDirectory target then source target else target
   );
 
-  project = pkgs.callPackage ./build-uv-project.nix { purifier = import purifier { inherit lib; }; } {
-    src = source root;
-    inherit pathSources;
-  };
+  buildUvProject = import ./build-uv-project.nix { purifier = import purifier { inherit lib; }; };
+  projectSrc = source root;
+  project = buildUvProject (
+    {
+      inherit pkgs pathSources;
+      src = projectSrc;
+    }
+    // lib.optionalAttrs (lockFile != null) { lockFile = /. + lockFile; }
+  );
 in
 if package == null then
   project.interactive
 else
-  project.packages.${package}
-    or (throw "uv-purifier: ${package} has no package; the packages are ${toString (builtins.attrNames project.packages)}")
+  project.release.members.${package}
+    or (throw "uv-purifier: ${package} has no release; the members with one are ${toString (builtins.attrNames project.release.members)}")

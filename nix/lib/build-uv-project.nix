@@ -1,6 +1,8 @@
 # SPDX-License-Identifier: MIT
 #
-# Builds a uv project in the Nix sandbox from its two lockfiles.
+# `lib.uv-purifier.buildUvProject`: builds a uv project in the Nix sandbox
+# from its two lockfiles, as the purifier contract
+# (github:nix-purifiers/purifier, CONTRACT.md) describes.
 #
 # uv.lock pins the project's dependencies, and uv-purifier.lock.json pins
 # the build requirements of the workspace members and of the dependencies
@@ -11,44 +13,58 @@
 # directory, the wheelhouse, and runs uv with no network and no index, so
 # that uv reads nothing but the wheelhouse.
 #
-# The result has, for each workspace member:
-# - `packages.<member>`: what `uv build` makes for the member, its sdist and
-#   its wheel, which is what `uv publish` uploads. A virtual member, which
-#   has no build, has no package.
-# - `environments.<member>`: a virtual environment with the member and its
-#   runtime dependencies installed, with the member's scripts in `bin/`.
+# The result has:
+# - `packages.<member>`: for each workspace member, a virtual environment
+#   with the member and its runtime dependencies installed, and the
+#   member's scripts in `bin/`, by name in `.scripts`.
+# - `tests`: the project's test command, run in a development environment
+#   (the default dependency groups and every member) on a copy of `src`.
+# - `release`: the sdist and wheel of every member with a build, which
+#   `uv-purifier publish` uploads, by file name in `.artifacts`.
+# - `fetches`: the download entries of the shared library that the build
+#   fetches for this system.
+# - `interactive`: what `uv-purifier prefetch` installs the project's .venv
+#   from.
 {
-  lib,
-  pkgs,
-  stdenvNoCC,
-  linkFarm,
-  runCommand,
-  writeText,
-  unzip,
-  uv,
-  python3,
-  glibc,
   # The shared library of the nix-purifiers (github:nix-purifiers/purifier),
   # which fetches download entries and holds the wheel helpers.
   purifier,
 }:
 {
+  pkgs,
   # The project root, which holds uv.lock, uv-purifier.lock.json and the
   # root pyproject.toml.
   src,
+  # The fetchers of the shared library's fetchEntry and tree, such as a
+  # `fetchurl` that sends credentials or uses a company mirror.
+  fetchers ? { },
   # The Python the project builds and runs with. It must satisfy the
   # project's requires-python.
-  python ? python3,
+  python ? pkgs.python3,
+  # The purifier lockfile. A file outside `src` replaces any copy in it,
+  # so a packaging flake can build a project its author does not change.
   lockFile ? src + "/uv-purifier.lock.json",
-  # A replacement for nixpkgs' fetchurl, for credentials or mirrors. It
-  # takes the arguments of nixpkgs' fetchurl.
-  fetchurl ? null,
+  # uv's lockfile, for a `src` that has none, or to replace the one it has.
+  uvLock ? src + "/uv.lock",
   # The local packages that uv.lock names by a path outside `src`, such as
   # "../shared", each mapped to a Nix path that holds it. A path inside
   # `src` is read from `src`.
   pathSources ? { },
+  # The command `tests` runs in the development environment, from a copy of
+  # `src`.
+  testCommand ? [ "pytest" ],
 }:
 let
+  inherit (pkgs)
+    lib
+    stdenvNoCC
+    linkFarm
+    runCommand
+    writeText
+    unzip
+    uv
+    glibc
+    ;
   inherit (builtins)
     concatMap
     elemAt
@@ -58,15 +74,31 @@ let
     map
     ;
 
-  lock = import ./lock.nix { inherit src lockFile; };
+  lock = import ./lock.nix {
+    inherit src lockFile;
+    uvLockFile = uvLock;
+  };
 
-  # The library's fetchers, with nixpkgs' own unless `fetchurl` replaces
-  # one.
-  fetchers = {
+  # The source the builds run in: `src` itself, or a copy of it with the
+  # lockfiles given outside it, since uv reads uv.lock from the project.
+  buildSrc =
+    if lockFile == src + "/uv-purifier.lock.json" && uvLock == src + "/uv.lock" then
+      src
+    else
+      runCommand "${baseNameOf (toString src)}-locked" { } ''
+        cp -r ${src} $out
+        chmod -R u+w $out
+        cp ${uvLock} $out/uv.lock
+        cp ${lockFile} $out/uv-purifier.lock.json
+      '';
+
+  # The library's fetchers get the package set, so that a file entry's
+  # mirrors are tried.
+  fetchArgs = {
     inherit pkgs;
   }
-  // lib.optionalAttrs (fetchurl != null) { inherit fetchurl; };
-  fetch = purifier.fetchEntry fetchers;
+  // fetchers;
+  fetch = purifier.fetchEntry fetchArgs;
 
   platform = stdenvNoCC.hostPlatform;
   target = "Python ${python.pythonVersion} on ${platform.system}";
@@ -143,15 +175,17 @@ let
   );
 
   # Every chosen file, as a file entry at its file name.
+  wheelhouseEntries = map (
+    name:
+    lock.files.${name}
+      or (throw "uv-purifier: neither lockfile has the URL of ${name}. Run `uv-purifier lock`.")
+  ) fileNames;
+
   wheelhouse = purifier.tree (
-    fetchers
+    fetchArgs
     // {
       name = "uv-purifier-wheelhouse";
-      entries = map (
-        name:
-        lock.files.${name}
-          or (throw "uv-purifier: neither lockfile has the URL of ${name}. Run `uv-purifier lock`.")
-      ) fileNames;
+      entries = wheelhouseEntries;
     }
   );
 
@@ -199,6 +233,19 @@ let
     else
       pathSources.${path}
         or (throw "uv-purifier: uv.lock names the local path ${path}, which is outside `src`. Pass it in `pathSources`, as `pathSources.\"${path}\" = <a Nix path>;`.");
+
+  # The download entries of a direct package: a git checkout, or the file
+  # at a URL. A local package has none.
+  directEntries =
+    d:
+    if d.kind == "git" then
+      [ d.git ]
+    else if d.kind == "url" then
+      [
+        (if d.wheel != null then fileEntry d.wheel.url d.wheel.hash else fileEntry d.value d.sdistHash)
+      ]
+    else
+      [ ];
 
   # The source a direct package builds from: a source tree, or an archive
   # that the build unpacks.
@@ -287,44 +334,43 @@ let
   # rewritten for this one; a pure wheel keeps its name.
   wheelName = purifier.wheelName wheelTarget;
 
-  packages = listToAttrs (
+  distributionFiles =
+    m:
+    let
+      outputs = outputsOf m;
+    in
+    [
+      outputs.sdist
+      (wheelName outputs.wheel)
+    ];
+
+  # What `uv build` makes for each member with a build: its sdist, and its
+  # wheel built from the sdist.
+  distributions = listToAttrs (
     map (m: {
       inherit (m) name;
-      value = stdenvNoCC.mkDerivation (
-        finalAttrs:
-        let
-          outputs = outputsOf m;
-          files = [
-            outputs.sdist
-            (wheelName outputs.wheel)
-          ];
-        in
-        {
-          pname = m.name;
-          version = memberVersion m;
-          inherit src;
-          nativeBuildInputs = [ uv ];
-          env = uvEnv;
-          dontConfigure = true;
-          buildPhase = ''
-            runHook preBuild
-            ${uvSetup}
-            ${uvBuild "--package ${lib.escapeShellArg m.name}"}
-            for file in ${lib.escapeShellArgs files}; do
-              if [ ! -f "$out/$file" ]; then
-                echo "uv-purifier: the build of ${m.name} made $(ls $out), not $file as uv-purifier.lock.json records. Run \`uv-purifier lock\`." >&2
-                exit 1
-              fi
-            done
-            runHook postBuild
-          '';
-          dontInstall = true;
-          dontFixup = true;
-          # Each file the build makes, by its name, known when Nix
-          # evaluates.
-          passthru.artifacts = lib.genAttrs files (file: "${finalAttrs.finalPackage}/${file}");
-        }
-      );
+      value = stdenvNoCC.mkDerivation {
+        pname = "${m.name}-distributions";
+        version = memberVersion m;
+        src = buildSrc;
+        nativeBuildInputs = [ uv ];
+        env = uvEnv;
+        dontConfigure = true;
+        buildPhase = ''
+          runHook preBuild
+          ${uvSetup}
+          ${uvBuild "--package ${lib.escapeShellArg m.name}"}
+          for file in ${lib.escapeShellArgs (distributionFiles m)}; do
+            if [ ! -f "$out/$file" ]; then
+              echo "uv-purifier: the build of ${m.name} made $(ls $out), not $file as uv-purifier.lock.json records. Run \`uv-purifier lock\`." >&2
+              exit 1
+            fi
+          done
+          runHook postBuild
+        '';
+        dontInstall = true;
+        dontFixup = true;
+      };
     }) builtMembers
   );
 
@@ -340,20 +386,44 @@ let
         );
     });
 
-  environments = listToAttrs (
+  # Installs into the virtual environment $out the requirements that
+  # `uv export` writes with `exportArgs`, the direct packages among them
+  # from their wheels, and the wheels of `members`.
+  installEnvironment = exportArgs: members: ''
+    ${uvSetup}
+    uv export --frozen ${exportArgs} --no-emit-workspace \
+      --format requirements.txt --output-file "$TMPDIR/exported.txt"
+    ${python.interpreter} -I ${./split_requirements.py} "$TMPDIR/exported.txt" ${directIndex} \
+      "$TMPDIR/requirements.txt" "$TMPDIR/direct-wheels.txt"
+    uv venv "$out"
+    uv pip install --python "$out/bin/python" --require-hashes -r "$TMPDIR/requirements.txt"
+    while read -r wheels; do
+      uv pip install --python "$out/bin/python" --no-deps "$wheels"/*.whl
+    done < "$TMPDIR/direct-wheels.txt"
+    ${lib.concatMapStrings (name: ''
+      uv pip install --python "$out/bin/python" --no-deps ${distributions.${name}}/*.whl
+    '') (filter (name: distributions ? ${name}) members)}
+  '';
+
+  packages = listToAttrs (
     map (m: {
       inherit (m) name;
       value = stdenvNoCC.mkDerivation (finalAttrs: {
-        pname = "${m.name}-environment";
+        pname = m.name;
         version = memberVersion m;
-        inherit src;
+        src = buildSrc;
         nativeBuildInputs = [ uv ];
         env = uvEnv;
         dontConfigure = true;
+        buildPhase = ''
+          runHook preBuild
+          ${installEnvironment "--no-dev --package ${lib.escapeShellArg m.name}" (memberClosure m.name)}
+          runHook postBuild
+        '';
         # The scripts of the member and of the members it depends on, by
         # name, known when Nix evaluates.
         passthru.scripts = lib.genAttrs (lib.concatMap (name: (outputsOf membersByName.${name}).scripts) (
-          filter (name: packages ? ${name}) (memberClosure m.name)
+          filter (name: distributions ? ${name}) (memberClosure m.name)
         )) (script: "${finalAttrs.finalPackage}/bin/${script}");
         postBuild = ''
           for script in ${lib.escapeShellArgs (builtins.attrNames finalAttrs.passthru.scripts)}; do
@@ -363,29 +433,71 @@ let
             fi
           done
         '';
-        buildPhase = ''
-          runHook preBuild
-          ${uvSetup}
-          uv export --frozen --no-dev --package ${lib.escapeShellArg m.name} --no-emit-workspace \
-            --format requirements.txt --output-file "$TMPDIR/exported.txt"
-          ${python.interpreter} -I ${./split_requirements.py} "$TMPDIR/exported.txt" ${directIndex} \
-            "$TMPDIR/requirements.txt" "$TMPDIR/direct-wheels.txt"
-          uv venv "$out"
-          uv pip install --python "$out/bin/python" --require-hashes -r "$TMPDIR/requirements.txt"
-          while read -r wheels; do
-            uv pip install --python "$out/bin/python" --no-deps "$wheels"/*.whl
-          done < "$TMPDIR/direct-wheels.txt"
-          ${lib.concatMapStrings (name: ''
-            uv pip install --python "$out/bin/python" --no-deps ${packages.${name}}/*.whl
-          '') (filter (name: packages ? ${name}) (memberClosure m.name))}
-          runHook postBuild
-        '';
         dontInstall = true;
       });
     }) lock.members
   );
 
-  # What `uv-purifier sync` installs a development environment from: the
+  projectName =
+    let
+      roots = filter (m: m.path == ".") lock.members;
+    in
+    if roots != [ ] then (lib.head roots).name else "uv-project";
+
+  # Every member with the default dependency groups, as `uv sync` installs
+  # a project for development.
+  development = stdenvNoCC.mkDerivation {
+    pname = "${projectName}-development";
+    version = "0";
+    src = buildSrc;
+    nativeBuildInputs = [ uv ];
+    env = uvEnv;
+    dontConfigure = true;
+    buildPhase = ''
+      runHook preBuild
+      ${installEnvironment "--all-packages" (map (m: m.name) builtMembers)}
+      runHook postBuild
+    '';
+    dontInstall = true;
+  };
+
+  tests = runCommand "${projectName}-tests" { } ''
+    cp -r ${buildSrc} project
+    chmod -R u+w project
+    cd project
+    export HOME=$TMPDIR PATH=${development}/bin:$PATH VIRTUAL_ENV=${development} PYTHONDONTWRITEBYTECODE=1
+    ${lib.escapeShellArgs testCommand}
+    touch $out
+  '';
+
+  release =
+    runCommand "${projectName}-release"
+      {
+        passthru = {
+          # Each file `publish` uploads, by its name, known when Nix evaluates.
+          artifacts = lib.listToAttrs (
+            lib.concatMap (
+              m:
+              map (file: {
+                name = file;
+                value = "${distributions.${m.name}}/${file}";
+              }) (distributionFiles m)
+            ) builtMembers
+          );
+          # The release of each member, which `publish --package` uploads.
+          members = distributions;
+        };
+      }
+      ''
+        mkdir $out
+        ${lib.concatMapStrings (name: ''
+          ln -s ${distributions.${name}}/* $out/
+        '') (builtins.attrNames distributions)}
+      '';
+
+  fetches = wheelhouseEntries ++ concatMap directEntries lock.direct;
+
+  # What `uv-purifier prefetch` installs the project's .venv from: the
   # Python of the build, the wheelhouse, and the wheels of the direct
   # packages with the index that split_requirements.py reads.
   interactive = runCommand "uv-purifier-interactive" { } ''
@@ -398,11 +510,11 @@ let
 in
 {
   inherit
-    lock
-    wheelhouse
     packages
-    environments
-    directWheels
+    tests
+    release
+    fetches
     interactive
+    lock
     ;
 }

@@ -187,11 +187,12 @@ class BuildRequirements(unittest.TestCase):
 
     def test_previous_resolution(self):
         with tempfile.TemporaryDirectory() as d:
-            self.assertIsNone(uvp.previous_resolution(d))
-            pathlib.Path(d, uvp.LOCK_FILE).write_text('{"resolvedAt": "2026-11-01T00:00:00Z"}')
-            self.assertEqual(uvp.previous_resolution(d), "2026-11-01T00:00:00Z")
-            pathlib.Path(d, uvp.LOCK_FILE).write_text("{not json")
-            self.assertIsNone(uvp.previous_resolution(d))
+            path = os.path.join(d, uvp.LOCK_FILE)
+            self.assertIsNone(uvp.previous_resolution(path))
+            pathlib.Path(path).write_text('{"resolvedAt": "2026-11-01T00:00:00Z"}')
+            self.assertEqual(uvp.previous_resolution(path), "2026-11-01T00:00:00Z")
+            pathlib.Path(path).write_text("{not json")
+            self.assertIsNone(uvp.previous_resolution(path))
 
 
 class CheckLockfile(unittest.TestCase):
@@ -211,11 +212,19 @@ class CheckLockfile(unittest.TestCase):
 
     def test_a_current_lockfile_passes(self):
         with tempfile.TemporaryDirectory() as d:
-            uvp.check_lockfile(self.copy(d))
+            project = self.copy(d)
+            uvp.check_lockfile(project, os.path.join(project, uvp.LOCK_FILE))
+
+    def test_a_lockfile_outside_the_project(self):
+        with tempfile.TemporaryDirectory() as d:
+            project = self.copy(d)
+            outside = os.path.join(d, "kept-elsewhere.json")
+            os.rename(os.path.join(project, uvp.LOCK_FILE), outside)
+            uvp.check_lockfile(project, outside)
 
     def assert_fails(self, project, text):
         with self.assertRaises(uvp.Error) as raised:
-            uvp.check_lockfile(project)
+            uvp.check_lockfile(project, os.path.join(project, uvp.LOCK_FILE))
         self.assertIn(text, str(raised.exception))
 
     def test_a_changed_uv_lock(self):

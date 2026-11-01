@@ -492,17 +492,17 @@ def inside_project(path):
     return not (path == ".." or path.startswith(("/", "../")))
 
 
-def previous_resolution(root):
+def previous_resolution(lockfile):
     """The time the build requirements of the existing lockfile were
     resolved as of, or None when there is no lockfile to keep."""
     try:
-        with open(os.path.join(root, LOCK_FILE)) as f:
+        with open(lockfile) as f:
             return json.load(f).get("resolvedAt")
     except (OSError, ValueError):
         return None
 
 
-def lock(root, upgrade=False):
+def lock(root, lockfile, upgrade=False):
     global EXCLUDE_NEWER
     uv_lock_path = os.path.join(root, "uv.lock")
     if not os.path.exists(uv_lock_path):
@@ -513,7 +513,7 @@ def lock(root, upgrade=False):
             "uv.lock does not match pyproject.toml; run `uv lock`, then `uv-purifier lock`\n"
             + check.stderr.strip()
         )
-    resolved_at = None if upgrade else previous_resolution(root)
+    resolved_at = None if upgrade else previous_resolution(lockfile)
     if resolved_at is None:
         resolved_at = datetime.datetime.now(datetime.UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
     else:
@@ -666,11 +666,11 @@ def lock(root, upgrade=False):
         "outputs": dict(sorted(outputs.items())),
     }
     result["contentHash"] = content_hash(result)
-    with open(os.path.join(root, LOCK_FILE), "w") as f:
+    with open(lockfile, "w") as f:
         json.dump(result, f, indent=2)
         f.write("\n")
     log(
-        f"wrote {LOCK_FILE}: {len(builds)} builds, {len(requirement_sets)} sets of build requirements"
+        f"wrote {lockfile}: {len(builds)} builds, {len(requirement_sets)} sets of build requirements"
     )
 
 
@@ -686,10 +686,9 @@ def built_members(root):
     ]
 
 
-def check_lockfile(root):
+def check_lockfile(root, path):
     """Checks, before a Nix build, the things the Nix library checks, so
     that a stale or edited lockfile fails with the project's own paths."""
-    path = os.path.join(root, LOCK_FILE)
     if not os.path.exists(path):
         raise Error(f"{path} does not exist; run `uv-purifier lock`")
     try:
@@ -718,10 +717,11 @@ def check_lockfile(root):
         )
 
 
-def nix_build(root, package=None):
+def nix_build(root, lockfile, package=None, out_link=None):
     """Builds, with the Nix library this program was installed with, a
-    member's package (its sdist and wheel), or without `package` the inputs
-    of a development environment. Returns the store path."""
+    member's release (its sdist and wheel), or without `package` the inputs
+    of a development environment. Returns the store path. With `out_link`,
+    the result stays alive through a garbage-collector root there."""
     library = os.environ.get("UV_PURIFIER_NIX_LIB")
     nixpkgs = os.environ.get("UV_PURIFIER_NIXPKGS")
     purifier = os.environ.get("UV_PURIFIER_LIBRARY")
@@ -732,12 +732,14 @@ def nix_build(root, package=None):
         )
     args = [
         "nix-build",
-        "--no-out-link",
+        *(["--out-link", out_link] if out_link else ["--no-out-link"]),
         os.path.join(library, "cli.nix"),
         "--arg", "nixpkgs", nixpkgs,
         "--arg", "purifier", purifier,
         "--argstr", "src", root,
     ]
+    if os.path.abspath(lockfile) != os.path.join(root, LOCK_FILE):
+        args += ["--argstr", "lockFile", os.path.abspath(lockfile)]
     if package is not None:
         args += ["--argstr", "package", package]
     result = subprocess.run(args, text=True, stdout=subprocess.PIPE, check=False)
@@ -747,8 +749,8 @@ def nix_build(root, package=None):
 
 
 def editable_trees(root):
-    """The source trees `sync` installs as editable: every workspace member
-    with a build, and every editable path dependency."""
+    """The source trees `prefetch` installs as editable: every workspace
+    member with a build, and every editable path dependency."""
     with open(os.path.join(root, "uv.lock"), "rb") as f:
         uv_lock = tomllib.load(f)
     members = workspace_members(uv_lock)
@@ -760,15 +762,22 @@ def editable_trees(root):
     return trees
 
 
-def sync(root, inputs=None):
-    """Installs the project's .venv offline, from the locked files that Nix
-    fetched and built: the dependencies with their hashes, the packages from
-    git, URLs and local paths from their wheels, and the workspace members
-    and editable path dependencies as editable installs."""
+# Where `prefetch` keeps its garbage-collector root, in the project.
+GC_ROOT = os.path.join(".uv-purifier", "prefetch")
+
+
+def prefetch(root, lockfile, inputs=None):
+    """Realizes in the Nix store everything the locked development needs on
+    this system, kept alive by a garbage-collector root in the project, and
+    installs the project's .venv from it offline: the dependencies with
+    their hashes, the packages from git, URLs and local paths from their
+    wheels, and the workspace members and editable path dependencies as
+    editable installs. Afterwards `uv run --no-sync`, the tests and the
+    editor work with no network."""
     if inputs is None:
-        check_lockfile(root)
+        check_lockfile(root, lockfile)
         log("building the locked files with Nix")
-        inputs = nix_build(root)
+        inputs = nix_build(root, lockfile, out_link=os.path.join(root, GC_ROOT))
     # uv gets a cache of its own. With the user's cache, which holds index
     # data from earlier online runs, uv picks distributions from that index
     # data even with UV_NO_INDEX, and then fails offline to download them.
@@ -824,16 +833,18 @@ def sync(root, inputs=None):
     log(f"installed {venv}; run commands in it with `uv run --no-sync`")
 
 
-def publish(root, packages, uv_publish_args):
-    check_lockfile(root)
+def publish(root, lockfile, packages, uv_publish_args):
+    """Uploads with `uv publish` the release that Nix built: the sdist and
+    wheel of each member with a build, or of the members named."""
+    check_lockfile(root, lockfile)
     members = built_members(root)
     for package in packages:
         if package not in members:
             raise Error(f"{package} is not a workspace member with a build; the members are {', '.join(members)}")
     files = []
     for package in packages or members:
-        log(f"building {package} with Nix")
-        out = nix_build(root, package)
+        log(f"building the release of {package} with Nix")
+        out = nix_build(root, lockfile, package)
         files += [
             os.path.join(out, name)
             for name in sorted(os.listdir(out))
@@ -847,18 +858,35 @@ def publish(root, packages, uv_publish_args):
 def main(argv=None):
     parser = argparse.ArgumentParser(prog="uv-purifier", description=__doc__.splitlines()[0])
     sub = parser.add_subparsers(dest="command", required=True)
+    def common(command_parser):
+        command_parser.add_argument("--project", default=".", help="the directory that holds uv.lock")
+        command_parser.add_argument(
+            "--lockfile",
+            help=f"the purifier lockfile, when it is kept outside the project (default: {LOCK_FILE} in the project)",
+        )
+
     lock_parser = sub.add_parser("lock", help=f"write {LOCK_FILE} beside uv.lock")
-    lock_parser.add_argument("--project", default=".", help="the directory that holds uv.lock")
+    common(lock_parser)
     lock_parser.add_argument(
         "--upgrade",
         action="store_true",
         help="resolve the build requirements anew; without it, a relock keeps the versions of the lockfile it replaces",
     )
+    prefetch_parser = sub.add_parser(
+        "prefetch",
+        help="realize the locked files with a GC root and install the project's .venv from them, for offline work",
+    )
+    common(prefetch_parser)
+    prefetch_parser.add_argument(
+        "--inputs",
+        help="the inputs Nix built for the project (the `interactive` output of buildUvProject); "
+        "built with Nix when absent",
+    )
     publish_parser = sub.add_parser(
         "publish",
-        help="build workspace members with Nix and upload what Nix built with `uv publish`",
+        help="upload with `uv publish` the release that Nix built",
     )
-    publish_parser.add_argument("--project", default=".", help="the directory that holds uv.lock")
+    common(publish_parser)
     publish_parser.add_argument(
         "--package",
         action="append",
@@ -870,27 +898,19 @@ def main(argv=None):
         nargs=argparse.REMAINDER,
         help="arguments for `uv publish`, after `--`",
     )
-    sync_parser = sub.add_parser(
-        "sync",
-        help="install the project's .venv offline from the locked files, with the members editable",
-    )
-    sync_parser.add_argument("--project", default=".", help="the directory that holds uv.lock")
-    sync_parser.add_argument(
-        "--inputs",
-        help="the inputs Nix built for the project (the `interactive` output of buildUvProject); "
-        "built with Nix when absent",
-    )
     args = parser.parse_args(argv)
+    root = os.path.abspath(args.project)
+    lockfile = os.path.abspath(args.lockfile) if args.lockfile else os.path.join(root, LOCK_FILE)
     try:
         if args.command == "lock":
-            lock(os.path.abspath(args.project), upgrade=args.upgrade)
-        elif args.command == "sync":
-            sync(os.path.abspath(args.project), args.inputs)
+            lock(root, lockfile, upgrade=args.upgrade)
+        elif args.command == "prefetch":
+            prefetch(root, lockfile, args.inputs)
         elif args.command == "publish":
             extra = args.uv_publish_args
             if extra and extra[0] == "--":
                 extra = extra[1:]
-            publish(os.path.abspath(args.project), args.package, extra)
+            publish(root, lockfile, args.package, extra)
     except Error as e:
         log(str(e))
         return 1

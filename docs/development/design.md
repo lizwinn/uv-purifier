@@ -60,8 +60,8 @@ reports the NAR hash that nixpkgs' `fetchgit` checks.
   sdist and wheel and the scripts its wheel installs. The lock run builds
   each member once with `uv build`, in a scratch copy of the project, and
   reads the scripts from the wheel's `entry_points.txt`. The Nix library
-  exposes them as `packages.<member>.artifacts` and
-  `environments.<member>.scripts`, and each build fails when it makes
+  exposes them as `release.artifacts` and
+  `packages.<member>.scripts`, and each build fails when it makes
   something else.
 - `inputsHash`: a hash over uv.lock and the pyproject.toml of every source
   tree in the project. The Nix library computes the same hash and refuses
@@ -123,7 +123,8 @@ ignores `--find-links`. The cache's layout is internal to uv.
 
 ## Developing offline
 
-`uv-purifier sync` builds the `interactive` output of `buildUvProject`
+`uv-purifier prefetch` builds the `interactive` output of `buildUvProject`,
+with a garbage-collector root at `.uv-purifier/prefetch` in the project,
 (the Python, the wheelhouse, and the wheels from git, URLs and local paths
 with their index for `split_requirements.py`) and installs the project's
 `.venv` from it the same way, with the default dependency groups, using
