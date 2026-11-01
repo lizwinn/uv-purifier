@@ -1,0 +1,54 @@
+version = 1
+revision = 5
+requires-python = ">=3.12"
+
+[[package]]
+name = "attrs"
+version = "25.3.0"
+source = { git = "https://github.com/python-attrs/attrs?tag=25.3.0#3dca08ce5bbe673d7df25f44f3dda92505d1043d" }
+
+[[package]]
+name = "localdir"
+version = "0.3.0"
+source = { directory = "vendor/localdir" }
+
+[[package]]
+name = "localsdist"
+version = "0.4.0"
+source = { path = "vendor/localsdist-0.4.0.tar.gz" }
+sdist = { hash = "sha256:b8e0eede401b6973054a8ea6b4a6d3ed1e432bb4b914d1382f14325c04a4542f" }
+
+[[package]]
+name = "localwheel"
+version = "0.5.0"
+source = { path = "vendor/localwheel-0.5.0-py3-none-any.whl" }
+wheels = [
+    { filename = "localwheel-0.5.0-py3-none-any.whl", hash = "sha256:8406d6ab7481dbe9a2be95a9c7acb778b6c4d031ce07499cf5812b7d2f0337cc" },
+]
+
+[[package]]
+name = "six"
+version = "1.17.0"
+source = { url = "https://github.com/benjaminp/six/archive/refs/tags/1.17.0.tar.gz" }
+sdist = { hash = "sha256:32f3ae8f39a23ff9458d84c90e00cf042e5432ccb61c8991a5e437e7eacd83c6" }
+
+[[package]]
+name = "sources"
+version = "0.1.0"
+source = { editable = "." }
+dependencies = [
+    { name = "attrs" },
+    { name = "localdir" },
+    { name = "localsdist" },
+    { name = "localwheel" },
+    { name = "six" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "attrs", git = "https://github.com/python-attrs/attrs?tag=25.3.0" },
+    { name = "localdir", directory = "vendor/localdir" },
+    { name = "localsdist", path = "vendor/localsdist-0.4.0.tar.gz" },
+    { name = "localwheel", path = "vendor/localwheel-0.5.0-py3-none-any.whl" },
+    { name = "six", url = "https://github.com/benjaminp/six/archive/refs/tags/1.17.0.tar.gz" },
+]

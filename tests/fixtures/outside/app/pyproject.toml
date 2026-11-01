@@ -1,0 +1,18 @@
+# A project that depends on a package outside its own directory, as an
+# editable path. The Nix build takes `src = ./app` and gets ../shared
+# through `pathSources`.
+[project]
+name = "outside-app"
+version = "1.0.0"
+requires-python = ">=3.12"
+dependencies = ["shared"]
+
+[project.scripts]
+outside-app = "outside_app:main"
+
+[tool.uv.sources]
+shared = { path = "../shared", editable = true }
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

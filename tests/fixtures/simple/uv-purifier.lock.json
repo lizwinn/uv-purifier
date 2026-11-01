@@ -3,6 +3,16 @@
   "inputsHash": "052d245eceb4b582a2f12d80c4737df7b5f63dc31a2125a2857365b903ee4476",
   "artifacts": [
     {
+      "path": "editables-0.6-py3-none-any.whl",
+      "url": "https://files.pythonhosted.org/packages/cc/0e/d095533037fc9468f947b19f2da53f869804632b508808de41e86e801797/editables-0.6-py3-none-any.whl",
+      "hash": "sha256-1w5GmAeKHQM+d4bZxk5b4HDQWKZ8IUFwJNOKWKwgqkM="
+    },
+    {
+      "path": "editables-0.6.tar.gz",
+      "url": "https://files.pythonhosted.org/packages/82/f8/02a4e9a0cb961b0feeb431ac96b231c157ecdcbbeacafe9e2fdb4b1dde39/editables-0.6.tar.gz",
+      "hash": "sha256-EWODSQI4HEYTeHlRxZFIAP3xVa4IhIo3O46lAGeAl3w="
+    },
+    {
       "path": "hatchling-1.33.0-py3-none-any.whl",
       "url": "https://files.pythonhosted.org/packages/32/64/4afe5dd77b2939a93e8c9513f8082dbd049ecba9c1484a379a0f6ae29d6b/hatchling-1.33.0-py3-none-any.whl",
       "hash": "sha256-QVKQuE9GTSiEMD/KiXTTjnuFV5Bp+rAqFdsIKPuxRG0="
@@ -91,9 +101,18 @@
     },
     {
       "requires": [
+        "editables~=0.3",
         "hatchling"
       ],
       "packages": [
+        {
+          "name": "editables",
+          "version": "0.6",
+          "wheels": [
+            "editables-0.6-py3-none-any.whl"
+          ],
+          "sdist": "editables-0.6.tar.gz"
+        },
         {
           "name": "hatchling",
           "version": "1.33.0",
@@ -148,5 +167,6 @@
   "builds": {
     "docopt==0.6.2": 0,
     "simple==0.1.0": 1
-  }
+  },
+  "sources": {}
 }

@@ -1,0 +1,11 @@
+# The source of vendor/localsdist-0.4.0.tar.gz, which the fixture depends
+# on as a local sdist file. Rebuild the sdist with
+# `uv build --sdist --out-dir ..` from this directory.
+[project]
+name = "localsdist"
+version = "0.4.0"
+requires-python = ">=3.12"
+
+[build-system]
+requires = ["setuptools>=70"]
+build-backend = "setuptools.build_meta"

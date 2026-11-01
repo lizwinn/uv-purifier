@@ -1,0 +1,19 @@
+version = 1
+revision = 5
+requires-python = ">=3.12"
+
+[[package]]
+name = "outside-app"
+version = "1.0.0"
+source = { editable = "." }
+dependencies = [
+    { name = "shared" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "shared", editable = "../shared" }]
+
+[[package]]
+name = "shared"
+version = "0.2.0"
+source = { editable = "../shared" }

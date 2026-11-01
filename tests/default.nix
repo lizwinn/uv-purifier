@@ -25,6 +25,48 @@ let
   # app (flit-core), which depends on greeting and on six.
   workspace = buildUvProject { src = ./fixtures/workspace; };
 
+  # A project with a dependency of every kind uv.lock records besides an
+  # index: attrs from git (built with hatch-vcs, which reads its version
+  # from git), six from a GitHub archive URL, and packages from a local
+  # directory, a local sdist and a local wheel.
+  sources = buildUvProject { src = ./fixtures/sources; };
+
+  # A project that depends on an editable path outside its directory,
+  # which the build gets through pathSources.
+  outside = buildUvProject {
+    src = ./fixtures/outside/app;
+    pathSources."../shared" = ./fixtures/outside/shared;
+  };
+
+  # Runs `uv-purifier sync` on a copy of a fixture, with the inputs Nix
+  # built for it, then runs a script of the .venv it installed. `edit`
+  # changes a member's source afterwards, and the script runs again: a
+  # member installed as editable prints `edited`.
+  syncs =
+    name: fixture: project: script: expected: edit: edited:
+    runCommand "uv-purifier-test-sync-${name}" { nativeBuildInputs = [ cli ]; } ''
+      cp -r ${fixture} project
+      chmod -R u+w project
+      cd project
+      # Python checks its cached bytecode by the modification time in
+      # seconds and the size of the source, so the edit right after the
+      # first run would go unseen through a cache.
+      export HOME=$TMPDIR UV_CACHE_DIR=$TMPDIR/uv-cache PYTHONDONTWRITEBYTECODE=1
+      uv-purifier sync --inputs ${project.interactive}
+      check() {
+        output=$(.venv/bin/${script})
+        echo "$output"
+        if [ "$output" != "$1" ]; then
+          echo "expected: $1" >&2
+          exit 1
+        fi
+      }
+      check ${lib.escapeShellArg expected}
+      ${edit}
+      check ${lib.escapeShellArg edited}
+      touch $out
+    '';
+
   # Runs a script of an environment and compares what it prints.
   runs =
     name: environment: script: expected:
@@ -44,6 +86,25 @@ in
   # The environment of the virtual root has app, its scripts and every
   # member app depends on.
   workspace = runs "workspace" workspace.environments.workspace "app" "hello, nix six=1.17.0";
+
+  sources =
+    runs "sources" sources.environments.sources "sources"
+      "attrs=25.3.0 six=1.17.0 localdir 0.3.0 localsdist 0.4.0 localwheel 0.5.0";
+
+  outside =
+    runs "outside" outside.environments.outside-app "outside-app"
+      "outside-app with shared 0.2.0";
+
+  sync-workspace =
+    syncs "workspace" ./fixtures/workspace workspace "app" "hello, nix six=1.17.0"
+      "sed -i 's/hello/greetings/' packages/greeting/src/greeting/__init__.py"
+      "greetings, nix six=1.17.0";
+
+  sync-sources =
+    syncs "sources" ./fixtures/sources sources "sources"
+      "attrs=25.3.0 six=1.17.0 localdir 0.3.0 localsdist 0.4.0 localwheel 0.5.0"
+      "sed -i 's/attrs=/attrs: /' src/sources/__init__.py"
+      "attrs: 25.3.0 six=1.17.0 localdir 0.3.0 localsdist 0.4.0 localwheel 0.5.0";
 
   # A member's package is what `uv build` makes: its sdist and its wheel.
   workspace-package = runCommand "uv-purifier-test-workspace-package" { } ''

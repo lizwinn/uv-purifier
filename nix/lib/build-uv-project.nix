@@ -21,6 +21,10 @@
   lib,
   stdenvNoCC,
   linkFarm,
+  runCommand,
+  writeText,
+  fetchgit,
+  unzip,
   uv,
   python3,
   glibc,
@@ -35,6 +39,10 @@
   lockFile ? src + "/uv-purifier.lock.json",
   # A replacement for the fetcher of locked files; see nix/lib/fetch.nix.
   fetchurl ? null,
+  # The local packages that uv.lock names by a path outside `src`, such as
+  # "../shared", each mapped to a Nix path that holds it. A path inside
+  # `src` is read from `src`.
+  pathSources ? { },
 }:
 let
   inherit (builtins)
@@ -110,7 +118,12 @@ let
 
   dependencyNeeds = map needs lock.distributions;
   builtMembers = filter (m: m.kind != "virtual") lock.members;
-  builds = buildClosure (map (m: m.key) builtMembers ++ concatMap (n: n.builds) dependencyNeeds);
+  # A package from git, a URL or a local path is built from its source,
+  # unless it is a wheel.
+  builtDirect = filter (d: d.wheel == null) lock.direct;
+  builds = buildClosure (
+    map (m: m.key) builtMembers ++ map (d: d.key) builtDirect ++ concatMap (n: n.builds) dependencyNeeds
+  );
 
   fileNames = lib.unique (
     concatMap (n: n.files) dependencyNeeds
@@ -148,6 +161,12 @@ let
   uvSetup = ''
     export HOME=$TMPDIR UV_CACHE_DIR=$TMPDIR/uv-cache
   '';
+  # `uv build --out-dir` also writes a .gitignore into the directory, which
+  # is no distribution.
+  uvBuild = args: ''
+    uv build ${args} --out-dir $out
+    rm -f $out/.gitignore
+  '';
 
   membersByName = listToAttrs (
     map (m: {
@@ -157,6 +176,104 @@ let
   );
 
   memberVersion = m: lib.removePrefix "${m.name}==" m.key;
+
+  # A local path of uv.lock, as a Nix path.
+  localPath =
+    path:
+    if lock.insideProject path then
+      src + "/${path}"
+    else
+      pathSources.${path}
+        or (throw "uv-purifier: uv.lock names the local path ${path}, which is outside `src`. Pass it in `pathSources`, as `pathSources.\"${path}\" = <a Nix path>;`.");
+
+  # The source a direct package builds from: a source tree, or an archive
+  # that the build unpacks.
+  directSource =
+    d:
+    if d.kind == "git" then
+      let
+        checkout = fetchgit {
+          inherit (d.git.git) url rev;
+          inherit (d.git) hash;
+          fetchSubmodules = d.git.git.submodules;
+        };
+      in
+      if d.subdirectory == null then checkout else "${checkout}/${d.subdirectory}"
+    else if d.kind == "url" then
+      fetch {
+        name = lock.storeName (lock.fileName d.value);
+        url = d.value;
+        hash = d.sdistHash;
+      }
+    else
+      localPath d.value;
+
+  # A wheel of each direct package, in a directory of its own.
+  directWheels = listToAttrs (
+    map (d: {
+      inherit (d) name;
+      value =
+        if d.wheel != null then
+          linkFarm "${d.name}-wheel" [
+            {
+              inherit (d.wheel) name;
+              path =
+                if d.wheel.url != null then
+                  fetch {
+                    name = lock.storeName d.wheel.name;
+                    inherit (d.wheel) url hash;
+                  }
+                else
+                  localPath d.value;
+            }
+          ]
+        else
+          stdenvNoCC.mkDerivation {
+            pname = "${d.name}-wheel";
+            inherit (d) version;
+            src = directSource d;
+            nativeBuildInputs = [
+              uv
+              unzip
+            ];
+            # A project that reads its version from git, through
+            # setuptools-scm or hatch-vcs, finds no repository in the
+            # checkout and takes the version uv.lock records.
+            env = uvEnv // {
+              SETUPTOOLS_SCM_PRETEND_VERSION = d.version;
+            };
+            dontConfigure = true;
+            buildPhase = ''
+              runHook preBuild
+              ${uvSetup}
+              ${uvBuild "--wheel ."}
+              runHook postBuild
+            '';
+            dontInstall = true;
+            dontFixup = true;
+          };
+    }) lock.direct
+  );
+
+  # What split_requirements.py needs to swap the direct packages of an
+  # exported requirements file for their wheels: each package from git or a
+  # URL by its name, and each local package by its path.
+  directIndex = writeText "uv-purifier-direct.json" (
+    builtins.toJSON {
+      names = listToAttrs (
+        map (d: {
+          inherit (d) name;
+          value = "${directWheels.${d.name}}";
+        }) (filter (d: d.kind == "git" || d.kind == "url") lock.direct)
+      );
+      paths = listToAttrs (
+        map (d: {
+          name = if lib.hasPrefix "/" d.value || lib.hasPrefix "." d.value then d.value else "./${d.value}";
+          value = "${directWheels.${d.name}}";
+        }) (filter (d: d.kind != "git" && d.kind != "url") lock.direct)
+      );
+    }
+  );
 
   packages = listToAttrs (
     map (m: {
@@ -171,7 +288,7 @@ let
         buildPhase = ''
           runHook preBuild
           ${uvSetup}
-          uv build --package ${lib.escapeShellArg m.name} --out-dir $out
+          ${uvBuild "--package ${lib.escapeShellArg m.name}"}
           runHook postBuild
         '';
         dontInstall = true;
@@ -206,9 +323,14 @@ let
           runHook preBuild
           ${uvSetup}
           uv export --frozen --no-dev --package ${lib.escapeShellArg m.name} --no-emit-workspace \
-            --format requirements.txt --output-file "$TMPDIR/requirements.txt"
+            --format requirements.txt --output-file "$TMPDIR/exported.txt"
+          ${python.interpreter} -I ${./split_requirements.py} "$TMPDIR/exported.txt" ${directIndex} \
+            "$TMPDIR/requirements.txt" "$TMPDIR/direct-wheels.txt"
           uv venv "$out"
           uv pip install --python "$out/bin/python" --require-hashes -r "$TMPDIR/requirements.txt"
+          while read -r wheels; do
+            uv pip install --python "$out/bin/python" --no-deps "$wheels"/*.whl
+          done < "$TMPDIR/direct-wheels.txt"
           ${lib.concatMapStrings (name: ''
             uv pip install --python "$out/bin/python" --no-deps ${packages.${name}}/*.whl
           '') (filter (name: packages ? ${name}) (memberClosure m.name))}
@@ -218,6 +340,17 @@ let
       };
     }) lock.members
   );
+
+  # What `uv-purifier sync` installs a development environment from: the
+  # Python of the build, the wheelhouse, and the wheels of the direct
+  # packages with the index that split_requirements.py reads.
+  interactive = runCommand "uv-purifier-interactive" { } ''
+    mkdir $out
+    ln -s ${python.interpreter} $out/python
+    ln -s ${wheelhouse} $out/wheelhouse
+    ln -s ${directIndex} $out/direct.json
+    ln -s ${./split_requirements.py} $out/split_requirements.py
+  '';
 in
 {
   inherit
@@ -225,5 +358,7 @@ in
     wheelhouse
     packages
     environments
+    directWheels
+    interactive
     ;
 }

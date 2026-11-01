@@ -1,0 +1,11 @@
+# The source of vendor/localwheel-0.5.0-py3-none-any.whl, which the
+# fixture depends on as a local wheel file. Rebuild the wheel with
+# `uv build --wheel --out-dir ..` from this directory.
+[project]
+name = "localwheel"
+version = "0.5.0"
+requires-python = ">=3.12"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
