@@ -1,9 +1,17 @@
 # SPDX-License-Identifier: MIT
-{ callPackage, ... }:
+#
+# The packages of the `uv-purifier` scope. The default package overlay adds
+# the scope to the package set as `pkgs.uv-purifier`.
+{ callPackage, lib, ... }:
 {
-  # The `uv-purifier` command: `lock` writes uv-purifier.lock.json, `sync`
-  # installs a .venv offline, and `publish` uploads what the Nix build of a
-  # workspace member made. The default package overlay gives it the source
-  # of the shared purifier library.
+  # The `uv-purifier` command: `lock` and `update` write the lockfiles,
+  # `prefetch` installs a .venv offline, and `publish` uploads what the Nix
+  # build of a workspace member made. The default package overlay gives it
+  # the source of the shared purifier library.
   cli = callPackage ./cli { purifierSource = null; };
+
+  # The builder of the purifier contract (nix/lib/build-uv-project.nix). A
+  # package written for callPackage takes the scope as `{ uv-purifier }:`
+  # and calls `uv-purifier.buildUvProject { src = ./.; }`.
+  buildUvProject = callPackage ../nix/lib/build-uv-project.nix { inherit (lib) purifier; };
 }

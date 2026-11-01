@@ -11,31 +11,34 @@
   cli,
   # The flake's library: `uv-purifier`, with readLock, and `purifier`.
   lib',
-  # The flake's `overlays.default`, which adds `buildUvProject`.
+  # The flake's `overlays.default`, which adds the scope `uv-purifier`.
   overlay,
 }:
 let
   inherit (pkgs) lib runCommand;
   inherit (lib') purifier;
 
-  # The package set with the overlay a consumer applies.
-  withBuilder = pkgs.extend overlay;
+  # The package set with the overlay a consumer applies, and its scope.
+  withScope = pkgs.extend overlay;
+  scope = withScope.uv-purifier;
 
   # Every fixture builds the way a consumer's package does: through the
-  # builder in the package set.
-  build = withBuilder.buildUvProject;
+  # builder in the scope.
+  build = scope.buildUvProject;
 
-  # A consumer's package, written for callPackage, that takes the builder
-  # by name.
-  consumer = withBuilder.callPackage (
-    { buildUvProject }: (buildUvProject { src = ./fixtures/simple; }).packages.simple
+  # A consumer's package, written for callPackage, that takes the scope by
+  # name.
+  consumer = withScope.callPackage (
+    { uv-purifier }: (uv-purifier.buildUvProject { src = ./fixtures/simple; }).packages.simple
   ) { };
 
   # The builder with `uv` replaced through `override`: the replacement
   # reaches the builds.
   overridden =
-    (withBuilder.buildUvProject.override { uv = pkgs.hello; } { src = ./fixtures/simple; })
-    .packages.simple;
+    (scope.buildUvProject.override { uv = pkgs.hello; } { src = ./fixtures/simple; }).packages.simple;
+
+  # The scope with `cli` replaced through `overrideScope`.
+  rescoped = scope.overrideScope (_final: _prev: { cli = pkgs.hello; });
 
   # A single project built with hatchling. attrs installs from its wheel,
   # docopt, which has only an sdist, is built with the locked setuptools,
@@ -156,17 +159,25 @@ in
       })).scripts.simple
       "simple attrs=25.3.0 docopt=0.6.2 markupsafe=3.0.3 &lt;nix&gt;";
 
-  # A package in the consumer's package set takes the builder by name, and
-  # `buildUvProject.override` replaces a package the builder takes.
+  # The builder lives in the scope `uv-purifier` of the package set. A
+  # package in the package set takes the scope by name,
+  # `buildUvProject.override` replaces a package the builder takes, and
+  # `overrideScope` replaces what the scope shares.
   overlay =
     let
+      inScope = scope ? buildUvProject && !(withScope ? buildUvProject);
       overrideReaches = lib.elem pkgs.hello overridden.nativeBuildInputs;
+      scopeOverridden = rescoped.cli == pkgs.hello && rescoped ? buildUvProject;
     in
-    if overrideReaches then
-      runs "overlay" consumer.scripts.simple
-        "simple attrs=25.3.0 docopt=0.6.2 markupsafe=3.0.3 &lt;nix&gt;"
+    if !inScope then
+      throw "buildUvProject is not in the scope uv-purifier alone"
+    else if !overrideReaches then
+      throw "buildUvProject.override { uv = ...; } did not reach the build of the package"
+    else if !scopeOverridden then
+      throw "uv-purifier.overrideScope did not replace what the scope shares"
     else
-      throw "buildUvProject.override { uv = ...; } did not reach the build of the package";
+      runs "overlay" consumer.scripts.simple
+        "simple attrs=25.3.0 docopt=0.6.2 markupsafe=3.0.3 &lt;nix&gt;";
 
   # The package of the virtual root has app, its scripts and every member
   # app depends on.
@@ -267,7 +278,7 @@ in
 
   flask = import ./real-world/flask {
     inherit pkgs cli;
-    inherit (withBuilder) buildUvProject;
+    inherit (scope) buildUvProject;
   };
 
   # The unit tests of the lock tool and of split_requirements.py.

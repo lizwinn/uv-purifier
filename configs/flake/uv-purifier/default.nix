@@ -16,12 +16,13 @@
       inherit (libOverlays) default;
     };
 
-    # The packages are the `default` entry of this flake's package overlay
-    # registry (pkg-overlays/): the package set applies it by default, and
-    # the flake exports it as `pkgOverlays` and as the plain
-    # `overlays.default`.
+    # The scope `uv-purifier` is the `default` entry of this flake's package
+    # overlay registry (pkg-overlays/): the package set applies it by
+    # default, and the flake exports it as `pkgOverlays` and as the plain
+    # `overlays.default`. The scope holds the builder, which is a function,
+    # so the `packages` output below takes the derivations of the scope.
     nixpkgs = {
-      packages.export.enabled = true;
+      packages.export.enabled = false;
     };
   };
 
@@ -32,7 +33,9 @@
   perSystem =
     { config, pkgs, ... }:
     {
-      packages.default = config.packages.cli;
+      packages = lib.filterAttrs (_: lib.isDerivation) pkgs.uv-purifier // {
+        default = config.packages.cli;
+      };
       devShells.default = pkgs.mkShell {
         packages = [
           pkgs.uv

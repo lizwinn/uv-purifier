@@ -24,14 +24,15 @@ Commit both lockfiles, uv.lock and `uv-purifier.lock.json`, to the
 project's repository. We recommend this setup, and the builder and the
 commands look for both lockfiles there by default.
 
-The flake's overlay, `overlays.default`,
-adds the builder `buildUvProject` to the package set, beside the builders
-of nixpkgs. A package written for `callPackage` takes it by name:
+The flake provides an overlay, `overlays.default`,
+that adds one attribute to the package set: the scope `uv-purifier`. The
+scope holds the builder `buildUvProject` and the `uv-purifier` command. A
+package written for `callPackage` takes the scope by name:
 
 ```nix
 # package.nix
-{ buildUvProject }:
-(buildUvProject { src = ./.; }).packages.app
+{ uv-purifier }:
+(uv-purifier.buildUvProject { src = ./.; }).packages.app
 ```
 
 A flake that builds the project applies the overlay and calls the package:
@@ -48,7 +49,7 @@ A flake that builds the project applies the overlay and calls the package:
         inherit system;
         overlays = [ uv-purifier.overlays.default ];
       };
-      project = pkgs.buildUvProject { src = ./.; };
+      project = pkgs.uv-purifier.buildUvProject { src = ./.; };
     in
     {
       # A virtual environment with the member `app`, its dependencies and
@@ -59,8 +60,9 @@ A flake that builds the project applies the overlay and calls the package:
 }
 ```
 
-`buildUvProject.override` replaces a package the builder takes from the
-package set, such as `uv` or `python3`.
+`uv-purifier.buildUvProject.override` replaces a package the builder takes
+from the package set, such as `uv` or `python3`. `uv-purifier.overrideScope`
+replaces what everything in the scope shares.
 
 `buildUvProject { src, ... }` returns:
 
@@ -258,7 +260,7 @@ uv run --no-sync pytest
 
 Commit `uv-purifier.lock.json` beside uv.lock in the Flask repository. A
 flake in the repository, like the one in the Quickstart, then builds
-Flask with `(pkgs.buildUvProject { src = ./.; }).packages.flask`.
+Flask with `(pkgs.uv-purifier.buildUvProject { src = ./.; }).packages.flask`.
 
 A packaging flake outside the repository can also build Flask, without
 changing its repository. It keeps `uv-purifier.lock.json` beside the
@@ -280,7 +282,7 @@ flake and passes it as `lockFile`:
         inherit system;
         overlays = [ uv-purifier.overlays.default ];
       };
-      project = pkgs.buildUvProject {
+      project = pkgs.uv-purifier.buildUvProject {
         src = flask;
         lockFile = ./uv-purifier.lock.json;
       };
