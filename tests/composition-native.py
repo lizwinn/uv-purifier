@@ -103,6 +103,9 @@ build-backend = "hatchling.build"
                  UV_COMPOSITION_NATIVE_LOCK=str(native_lock))))
     repository = Path(next(result['outputs']['out'] for result in built
                            if result['outputs']['out'].endswith('-python-projection')))
+    closure = subprocess.check_output(['nix-store', '--query', '--requisites', str(repository)], text=True).splitlines()
+    assert any(path.endswith('-composed-app-1.0') for path in closure), 'project runtime was not retained'
+    assert any(path.endswith('-simple-0.1.0') for path in closure), 'provided Nix producer was not retained'
     downstream = temporary / 'downstream'
     subprocess.run([str(tools / 'bin/uv'), 'venv', '--python', str(tools / 'bin/python'), str(downstream)], check=True)
     subprocess.run([str(tools / 'bin/uv'), 'pip', 'install', '--python', str(downstream / 'bin/python'),

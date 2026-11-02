@@ -529,6 +529,8 @@ let
             ++ builtins.attrValues indexWheels
             ++ map (input: input.repository) supplied
           )}
+        mkdir -p "$out/nix-support"
+        printf '%s\n' ${environment} > "$out/nix-support/inputs"
       '';
 
   packages = listToAttrs (
