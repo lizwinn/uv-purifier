@@ -44,7 +44,8 @@ uv has no plugin mechanism, so uv-purifier is a separate command. It runs
 uv for every step that resolves or installs packages.
 
 ```zsh
-nix run github:nix-purifiers/uv-purifier -- prefetch
+nix shell 'github:nix-purifiers/uv-purifier'
+uv-purifier prefetch
 uv run --no-sync pytest
 ```
 
@@ -71,9 +72,10 @@ and prefetch again. `uv-purifier lock` keeps uv.lock's resolution: it runs
 pyproject.toml, which changes no version that uv can keep.
 
 ```zsh
+nix shell 'github:nix-purifiers/uv-purifier'
 uv add requests
-nix run github:nix-purifiers/uv-purifier -- lock
-nix run github:nix-purifiers/uv-purifier -- prefetch
+uv-purifier lock
+uv-purifier prefetch
 ```
 
 To upgrade dependencies, `uv-purifier update` updates both lockfiles in
@@ -82,10 +84,11 @@ each package it names, and then relocks the purifier lockfile with the
 build requirements resolved anew:
 
 ```zsh
+nix shell 'github:nix-purifiers/uv-purifier'
 # every package
-nix run github:nix-purifiers/uv-purifier -- update
+uv-purifier update
 # only requests
-nix run github:nix-purifiers/uv-purifier -- update requests
+uv-purifier update requests
 ```
 
 A relock with `lock` resolves the build requirements as of the time the
@@ -101,7 +104,7 @@ that path has no file yet, `lock` starts from the uv.lock of the project.
 A dev shell of a packaging flake can set both variables to the paths it
 passes as `lockFile` and `uvLock`.
 
-`nix run github:nix-purifiers/uv-purifier -- publish -- --token "$TOKEN"`
+`uv-purifier publish -- --token "$TOKEN"`
 uploads the `release` that Nix built, with `uv publish`; arguments after
 `--` go to `uv publish`, and `--package <member>` limits it to members.
 
@@ -298,10 +301,11 @@ for tests, typing and docs. In a checkout of Flask, lock it, then install
 the development environment and run its tests:
 
 ```zsh
+nix shell 'github:nix-purifiers/uv-purifier'
 git clone https://github.com/pallets/flask
 cd flask
-nix run github:nix-purifiers/uv-purifier -- lock
-nix run github:nix-purifiers/uv-purifier -- prefetch
+uv-purifier lock
+uv-purifier prefetch
 uv run --no-sync pytest
 ```
 
@@ -362,7 +366,8 @@ To make that lockfile, run `lock` in a checkout of the same Flask commit
 with the path of the packaging flake:
 
 ```zsh
-nix run github:nix-purifiers/uv-purifier -- lock --lockfile \
+nix shell 'github:nix-purifiers/uv-purifier'
+uv-purifier lock --lockfile \
   ../flask-packaging/uv-purifier.lock.json
 ```
 
