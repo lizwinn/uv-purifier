@@ -126,7 +126,8 @@ the builder directly:
 
 ```nix
 {
-  inputs.uv-purifier.url = "github:nix-purifiers/uv-purifier";
+  inputs.uv-purifier.url =
+    "github:nix-purifiers/uv-purifier";
   inputs.nixpkgs.follows = "uv-purifier/nixpkgs";
 
   outputs =
@@ -137,10 +138,13 @@ the builder directly:
         inherit system;
         overlays = [ uv-purifier.overlays.default ];
       };
-      project = pkgs.uv-purifier.buildUvProject { src = ./.; };
+      project = pkgs.uv-purifier.buildUvProject {
+        src = ./.;
+      };
     in
     {
-      # A virtual environment with the member `app`, its dependencies and
+      # A virtual environment with the member `app`, its
+      # dependencies and
       # its scripts in bin/.
       packages.${system}.default = project.packages.app;
       checks.${system}.tests = project.tests;
@@ -329,7 +333,8 @@ the flake and passes it as `lockFile`:
 
 ```nix
 {
-  inputs.uv-purifier.url = "github:nix-purifiers/uv-purifier";
+  inputs.uv-purifier.url =
+    "github:nix-purifiers/uv-purifier";
   inputs.nixpkgs.follows = "uv-purifier/nixpkgs";
   inputs.flask = {
     url = "github:pallets/flask";
@@ -355,8 +360,10 @@ the flake and passes it as `lockFile`:
       };
     in
     {
-      # Flask and its dependencies, with the `flask` command in bin/.
-      packages.${system}.default = project.packages.flask;
+      # Flask and its dependencies, with the `flask`
+      # command in bin/.
+      packages.${system}.default =
+        project.packages.flask;
       checks.${system}.tests = project.tests;
     };
 }
