@@ -133,6 +133,8 @@ let
   negative = import ./negative.nix { inherit pkgs; };
 in
 {
+  composition-producer = simple.packages.simple;
+
   simple =
     runs "simple" simple.packages.simple.scripts.simple
       "simple attrs=25.3.0 docopt=0.6.2 markupsafe=3.0.3 &lt;nix&gt;";

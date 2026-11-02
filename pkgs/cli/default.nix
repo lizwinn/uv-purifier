@@ -18,6 +18,10 @@
   purifierSource,
 }:
 let
+  python = python3.withPackages (ps: [
+    ps.packaging
+    ps.tomli-w
+  ]);
   library =
     if purifierSource == null then
       throw "uv-purifier: the cli package needs the source of the purifier library; take it from the flake's package overlay"
@@ -43,7 +47,7 @@ stdenvNoCC.mkDerivation {
     mkdir -p $out/bin $out/share/uv-purifier
     cp src/uv_purifier.py $out/share/uv-purifier/
     cp -r nix/lib $out/share/uv-purifier/nix-lib
-    makeWrapper ${python3.interpreter} $out/bin/uv-purifier \
+    makeWrapper ${python.interpreter} $out/bin/uv-purifier \
       --add-flags "-I $out/share/uv-purifier/uv_purifier.py" \
       --prefix PATH : ${
         lib.makeBinPath [
@@ -54,7 +58,8 @@ stdenvNoCC.mkDerivation {
       } \
       --set UV_PURIFIER_NIX_LIB $out/share/uv-purifier/nix-lib \
       --set UV_PURIFIER_NIXPKGS ${path} \
-      --set UV_PURIFIER_LIBRARY ${library}
+      --set UV_PURIFIER_LIBRARY ${library} \
+      --set UV_PURIFIER_PROJECT_INPUTS_TOOLS ${library}/tools
     runHook postInstall
   '';
 

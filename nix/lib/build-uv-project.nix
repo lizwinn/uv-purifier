@@ -72,6 +72,7 @@
   # "../shared", each mapped to a Nix path that holds it. A path inside
   # `src` is read from `src`.
   pathSources ? { },
+  projectDependencies ? null,
   # The command `tests` runs in the development environment, from a copy of
   # `src`.
   testCommand ? [ "pytest" ],
@@ -96,6 +97,40 @@ let
   # memory: which packages build, and with which build requirements.
   lock = import ./lock.nix { inherit src lockFile uvLock; };
 
+  inputRecords = lock.purifier.projectInputs or [ ];
+  dependencies =
+    if projectDependencies == null then
+      purifier.lockedProjectInputs {
+        inputs = inputRecords;
+        system = stdenvNoCC.hostPlatform.system;
+      }
+    else
+      projectDependencies;
+  supplied = purifier.projectInputs {
+    inherit dependencies;
+    formats = [ "python" ];
+  };
+  hasInputs = supplied != [ ];
+  oldRepositories = map (input: input.nativeRepository) inputRecords;
+  isProvided =
+    distribution:
+    lib.any (repository: lib.hasPrefix (repository + "/") distribution.value) oldRepositories;
+  inputViews = writeText "uv-python-inputs.json" (
+    builtins.toJSON (
+      map (input: {
+        repository = toString input.repository;
+        catalog = input.repository.catalog;
+      }) supplied
+    )
+  );
+  oldRepositoryFile = writeText "uv-python-original-repositories.json" (
+    builtins.toJSON oldRepositories
+  );
+  inputPython = python.withPackages (ps: [
+    ps.packaging
+    ps.tomli-w
+  ]);
+
   # The downloads of this system, by file name.
   systemFiles = listToAttrs (
     map (entry: {
@@ -107,7 +142,20 @@ let
   # The source the builds run in: `src` itself, or a copy of it with the
   # lockfiles given outside it.
   buildSrc =
-    if lockFile == src + "/uv-purifier.lock.json" && uvLock == src + "/uv.lock" then
+    if hasInputs then
+      runCommand "${baseNameOf (toString src)}-project-inputs" { nativeBuildInputs = [ inputPython ]; } ''
+        cp -r ${src} "$out"
+        chmod -R u+w "$out"
+        cp ${lockFile} "$out/uv-purifier.lock.json"
+        cp --no-preserve=mode ${uvLock} "$out/uv.lock"
+        mkdir -p "$out/.uv-purifier-inputs"
+        cp --no-preserve=mode ${directIndexBase} "$out/.uv-purifier-inputs/direct.json"
+        python ${./python_inputs.py} --project "$out" --views ${inputViews} \
+          --old-repositories ${oldRepositoryFile} \
+          --index "$out/.uv-purifier-inputs/direct.json" \
+          --wheelhouse "$out/.uv-purifier-inputs/wheels"
+      ''
+    else if lockFile == src + "/uv-purifier.lock.json" && uvLock == src + "/uv.lock" then
       src
     else
       runCommand "${baseNameOf (toString src)}-locked" { } ''
@@ -287,7 +335,9 @@ let
     map (d: {
       inherit (d) name;
       value =
-        if d.wheel != null then
+        if isProvided d then
+          "${buildSrc}/.uv-purifier-inputs/wheels/${d.name}"
+        else if d.wheel != null then
           linkFarm "${d.name}-wheel" [
             {
               inherit (d.wheel) name;
@@ -350,19 +400,20 @@ let
   # What split_requirements.py needs to swap the direct packages of an
   # exported requirements file for their wheels: each package from git or a
   # URL by its name, and each local package by its path.
-  directIndex = writeText "uv-purifier-direct.json" (
+  directIndex = if hasInputs then "${buildSrc}/.uv-purifier-inputs/direct.json" else directIndexBase;
+  directIndexBase = writeText "uv-purifier-direct.json" (
     builtins.toJSON {
       names = listToAttrs (
         map (d: {
           inherit (d) name;
           value = "${directWheels.${d.name}}";
-        }) (filter (d: d.kind == "git" || d.kind == "url") lock.direct)
+        }) (filter (d: !(isProvided d) && (d.kind == "git" || d.kind == "url")) lock.direct)
       );
       paths = listToAttrs (
         map (d: {
           name = if lib.hasPrefix "/" d.value || lib.hasPrefix "." d.value then d.value else "./${d.value}";
           value = "${directWheels.${d.name}}";
-        }) (filter (d: d.kind != "git" && d.kind != "url") lock.direct)
+        }) (filter (d: !(isProvided d) && d.kind != "git" && d.kind != "url") lock.direct)
       );
     }
   );
@@ -400,6 +451,10 @@ let
         buildPhase = ''
           runHook preBuild
           ${uvSetup}
+          ${lib.optionalString hasInputs ''
+            cp ${src}/pyproject.toml pyproject.toml
+            rm -rf .uv-purifier-inputs
+          ''}
           ${uvBuild "--package ${lib.escapeShellArg m.name}"}
           for file in ${lib.escapeShellArgs (distributionFiles m)}; do
             if [ ! -f "$out/$file" ]; then
@@ -469,7 +524,10 @@ let
         python ${./export-runtime.py} --environment ${environment} --destination "$out" \
           ${lib.concatMapStringsSep " " (source: "--own ${source}") (publicationSources name)} \
           ${lib.concatMapStringsSep " " (source: "--candidate ${source}") (
-            [ wheelhouse ] ++ builtins.attrValues directWheels ++ builtins.attrValues indexWheels
+            [ wheelhouse ]
+            ++ builtins.attrValues directWheels
+            ++ builtins.attrValues indexWheels
+            ++ map (input: input.repository) supplied
           )}
       '';
 
@@ -494,6 +552,7 @@ let
           repository = publicationRepository m.name;
           producer = distributions.${m.name} or finalAttrs.finalPackage;
           runtimeRepository = runtimeRepository m.name finalAttrs.finalPackage;
+          dependencies = dependencies;
           inherit runCommand python3;
         };
         passthru.scripts = lib.genAttrs (lib.concatMap (name: (outputsOf membersByName.${name}).scripts) (
@@ -582,6 +641,7 @@ let
     ln -s ${wheelhouse} $out/wheelhouse
     ln -s ${directIndex} $out/direct.json
     ln -s ${./split_requirements.py} $out/split_requirements.py
+    ${lib.optionalString hasInputs "ln -s ${buildSrc} $out/project"}
   '';
 in
 {

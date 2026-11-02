@@ -346,13 +346,13 @@ class ToolLockfile(unittest.TestCase):
 
 
 class SplitRequirements(unittest.TestCase):
-    def run_split(self, direct):
+    def run_split(self, direct, exported_text=EXPORTED):
         with tempfile.TemporaryDirectory() as d:
             exported = os.path.join(d, "exported.txt")
             index = os.path.join(d, "direct.json")
             requirements = os.path.join(d, "requirements.txt")
             wheels = os.path.join(d, "wheels.txt")
-            pathlib.Path(exported).write_text(EXPORTED)
+            pathlib.Path(exported).write_text(exported_text)
             pathlib.Path(index).write_text(json.dumps(direct))
             split.main(exported, index, requirements, wheels)
             return pathlib.Path(requirements).read_text(), pathlib.Path(wheels).read_text().split()
@@ -374,6 +374,14 @@ class SplitRequirements(unittest.TestCase):
         self.assertNotIn("attrs @", kept)
         self.assertNotIn("./vendor", kept)
         self.assertEqual(wheels, ["/w/localdir", "/w/editable", "/w/localsdist", "/w/attrs", "/w/six"])
+
+    def test_file_urls_select_supplied_wheels(self):
+        kept, wheels = self.run_split(
+            {"paths": {"/nix/store/wheels/library-1+nix.test.whl": "/w/library"}},
+            "file:///nix/store/wheels/library-1%2Bnix.test.whl\n",
+        )
+        self.assertEqual(kept.strip(), "")
+        self.assertEqual(wheels, ["/w/library"])
 
     def test_a_requirement_without_a_wheel_is_an_error(self):
         with self.assertRaises(SystemExit) as raised:

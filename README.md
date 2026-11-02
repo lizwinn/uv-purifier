@@ -117,6 +117,32 @@ for ordinary Python installers. Unchanged third-party wheels retain their
 published versions. Dependencies available only as source archives are built
 into wheels with their locked build requirements.
 
+## Dependencies from another purified project
+
+```zsh
+nix shell 'github:nix-purifiers/uv-purifier'
+uv-purifier lock \
+  --input 'github:owner/library/<rev>#library'
+uv-purifier prefetch
+uv run --no-sync pytest
+```
+
+The producer must expose `projections.python`. Its wheels override native
+version requests automatically; project dependency declarations stay unchanged.
+The purifier lock records the pinned Nix source, and omits the supplied wheels
+from its downloads. Relocking retains the pin; `update` refreshes it. Repeat
+`--input` for additional producers. Conflicting providers are rejected.
+
+Use `uv-purifier lock` and `uv-purifier update` to retain these bindings.
+`prefetch` resolves recorded wheel paths for the current Python and machine
+without changing the committed lockfiles. Development still uses `.venv`
+and `uv run --no-sync`.
+
+For composed projects, `publish` uploads the projected wheels and their
+runtime closure, with dependency metadata for ordinary installers. These
+wheels use local versions; the destination index must accept them. The
+exported wheelhouse also works directly with `--find-links`.
+
 ## Building the project with Nix
 
 Once the native development workflow is working, you can also build and

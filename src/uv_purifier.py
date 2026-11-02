@@ -18,6 +18,7 @@ import hashlib
 import io
 import json
 import os
+from pathlib import Path
 import re
 import shutil
 import subprocess
@@ -270,7 +271,7 @@ def scratch_copy(tree, workdir):
     while it reports its requirements, as setuptools writes its egg-info, so
     the hooks run on a copy rather than on the project or a store path."""
     copy = os.path.join(tempfile.mkdtemp(dir=workdir), "tree")
-    shutil.copytree(tree, copy, ignore=shutil.ignore_patterns(".git", ".venv", "__pycache__", "dist"))
+    shutil.copytree(tree, copy, ignore=shutil.ignore_patterns(".git", ".venv", "__pycache__", "dist", ".uv-purifier"))
     subprocess.run(["chmod", "-R", "u+w", copy], check=True)
     return copy
 
@@ -440,7 +441,7 @@ def scratch_project(root, uv_lock, workdir):
     depth = max((len(os.path.normpath(p).split(os.sep)) for p in outside), default=0)
     base = tempfile.mkdtemp(dir=workdir)
     copy = os.path.join(base, *(["nested"] * depth), "project")
-    shutil.copytree(root, copy, ignore=shutil.ignore_patterns(".git", ".venv", "__pycache__", "dist"))
+    shutil.copytree(root, copy, ignore=shutil.ignore_patterns(".git", ".venv", "__pycache__", "dist", ".uv-purifier"))
     for path in outside:
         link = os.path.normpath(os.path.join(copy, path))
         if not os.path.exists(link):
@@ -529,6 +530,15 @@ def inside_project(path):
     return not (path == ".." or path.startswith(("/", "../")))
 
 
+def previous_lock(lockfile):
+    try:
+        with open(lockfile) as source:
+            value = json.load(source)
+        return value if isinstance(value, dict) else {}
+    except (OSError, ValueError):
+        return {}
+
+
 def previous_resolution(lockfile):
     """The time the build requirements of the existing lockfile were
     resolved as of, or None when there is no lockfile to keep."""
@@ -539,10 +549,13 @@ def previous_resolution(lockfile):
         return None
 
 
-def update(root, lockfile, packages):
+def update(root, lockfile, packages, inputs=None):
     """Updates both lockfiles: `uv lock --upgrade`, or with package names
     `uv lock --upgrade-package` for each, and then the purifier lockfile
     against the result, with its build requirements resolved anew."""
+    previous = previous_lock(lockfile)
+    if inputs is not None or previous.get('projectInputs'):
+        return lock(root, lockfile, upgrade=True, inputs=inputs, upgrade_packages=packages)
     args = ["lock"]
     if packages:
         for package in packages:
@@ -556,7 +569,67 @@ def update(root, lockfile, packages):
     lock(root, lockfile, upgrade=True)
 
 
-def lock(root, lockfile, upgrade=False):
+def input_helpers():
+    tools = os.environ.get('UV_PURIFIER_PROJECT_INPUTS_TOOLS')
+    if not tools:
+        raise Error('Nix project inputs require the packaged uv-purifier command')
+    sys.path.insert(0, tools)
+    sys.path.insert(0, os.environ['UV_PURIFIER_NIX_LIB'])
+    import project_inputs
+    import python_inputs
+    return project_inputs, python_inputs
+
+
+def lock(root, lockfile, upgrade=False, inputs=None, upgrade_packages=()):
+    previous = previous_lock(lockfile)
+    old_inputs = previous.get('projectInputs', [])
+    if inputs is None:
+        inputs = [entry['reference'] for entry in old_inputs]
+    if not inputs:
+        return native_lock(root, lockfile, upgrade)
+    sources, bindings = input_helpers()
+    try:
+        pinned = sources.pin(inputs, old_inputs, refresh=upgrade)
+        views = sources.python_views(pinned, os.path.join(root, '.uv-purifier', 'project-inputs'))
+        old_roots = [entry['nativeRepository'] for entry in old_inputs if 'nativeRepository' in entry]
+        old_roots += [str(view['repository']) for view in views]
+        with tempfile.TemporaryDirectory(prefix='uv-purifier-inputs-') as temporary:
+            old_lock = os.path.join(root, 'uv.lock')
+            model = tomllib.load(open(old_lock, 'rb')) if os.path.exists(old_lock) else {}
+            effective = scratch_project(root, model, temporary)
+            bindings.prepare(Path(effective), views, old_roots)
+            if upgrade:
+                arguments = ['lock']
+                if upgrade_packages:
+                    for package in upgrade_packages:
+                        arguments += ['--upgrade-package', package]
+                else:
+                    arguments += ['--upgrade']
+                subprocess.run(['uv', *arguments], cwd=effective, check=True)
+            generated = os.path.join(temporary, LOCK_FILE)
+            if os.path.exists(lockfile):
+                shutil.copyfile(lockfile, generated)
+            native_lock(effective, generated, upgrade)
+            import tomli_w
+            native = tomllib.load(open(os.path.join(effective, 'uv.lock'), 'rb'))
+            with open(old_lock, 'w') as output:
+                output.write(tomli_w.dumps(native))
+            result = json.load(open(generated))
+            for entry, view in zip(pinned, views):
+                entry['nativeRepository'] = str(view['repository'])
+            result['projectInputs'] = pinned
+            trees = [source_kind(package)[1] for package in native.get('package', [])
+                     if source_kind(package)[0] in ('editable', 'directory', 'virtual')]
+            result['inputsHash'] = inputs_hash(root, trees)
+            result['contentHash'] = content_hash(result)
+            with open(lockfile, 'w') as output:
+                json.dump(result, output, indent=2)
+                output.write('\n')
+    except (ValueError, subprocess.CalledProcessError) as error:
+        raise Error(str(error)) from error
+
+
+def native_lock(root, lockfile, upgrade=False):
     """Writes the purifier lockfile. uv.lock keeps its resolution: `uv lock`
     runs only to write it where it is missing or does not match
     pyproject.toml, which changes no version it can keep. With `upgrade`,
@@ -930,7 +1003,9 @@ def prefetch(root, lockfile, inputs=None):
         exported = os.path.join(workdir, "exported.txt")
         requirements = os.path.join(workdir, "requirements.txt")
         wheels = os.path.join(workdir, "wheels.txt")
-        uv("export", "--frozen", "--all-packages", "--no-emit-workspace",
+        effective = os.path.join(inputs, "project")
+        project_args = ["--project", effective] if os.path.isdir(effective) else []
+        uv("export", *project_args, "--frozen", "--all-packages", "--no-emit-workspace",
            "--format", "requirements.txt", "--output-file", exported)
         result = subprocess.run(
             [sys.executable, "-I", os.path.join(inputs, "split_requirements.py"),
@@ -974,7 +1049,13 @@ def publish(root, lockfile, packages, uv_publish_args):
             for name in sorted(os.listdir(out))
             if name.endswith((".whl", ".tar.gz", ".zip"))
         ]
-    result = subprocess.run(["uv", "publish", *uv_publish_args, *files], cwd=root, check=False)
+    unique = {}
+    for file in files:
+        name = os.path.basename(file)
+        if name in unique and Path(unique[name]).read_bytes() != Path(file).read_bytes():
+            raise Error(f"conflicting projected wheel publication: {name}")
+        unique[name] = file
+    result = subprocess.run(["uv", "publish", *uv_publish_args, *unique.values()], cwd=root, check=False)
     if result.returncode != 0:
         raise Error("uv publish failed")
 
@@ -1000,11 +1081,13 @@ def main(argv=None):
         help=f"write {LOCK_FILE}, keeping uv.lock's resolution (`uv lock` runs only where uv.lock is missing or stale)",
     )
     common(lock_parser)
+    lock_parser.add_argument("--input", action="append", help="a pinned Nix producer with a Python projection")
     update_parser = sub.add_parser(
         "update",
         help="update both lockfiles: `uv lock --upgrade` (or --upgrade-package for each package named), then the purifier lockfile",
     )
     common(update_parser)
+    update_parser.add_argument("--input", action="append", help="a pinned Nix producer with a Python projection")
     update_parser.add_argument("packages", nargs="*", help="the packages to update (every package when none)")
     prefetch_parser = sub.add_parser(
         "prefetch",
@@ -1041,9 +1124,9 @@ def main(argv=None):
     try:
         with tool_lockfile(root, outside, writes=args.command in ("lock", "update")):
             if args.command == "lock":
-                lock(root, lockfile)
+                lock(root, lockfile, inputs=args.input)
             elif args.command == "update":
-                update(root, lockfile, args.packages)
+                update(root, lockfile, args.packages, args.input)
             elif args.command == "prefetch":
                 prefetch(root, lockfile, args.inputs)
             elif args.command == "publish":

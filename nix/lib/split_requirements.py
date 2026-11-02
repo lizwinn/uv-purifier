@@ -21,6 +21,7 @@ import json
 import os
 import re
 import sys
+from urllib.parse import unquote, urlsplit
 
 PINNED = re.compile(r"^[A-Za-z0-9._-]+(\[[^\]]*\])?==")
 
@@ -70,6 +71,9 @@ def main(exported, direct_json, requirements_out, wheels_out):
             wheel = by_name.get(name)
         else:
             path = requirement.split(";", 1)[0].strip()
+            url = urlsplit(path)
+            if url.scheme == "file" and url.netloc in ("", "localhost"):
+                path = unquote(url.path)
             wheel = by_path.get(os.path.normpath(path))
         if wheel is None:
             missing.append(requirement)

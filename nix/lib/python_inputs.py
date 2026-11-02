@@ -1,0 +1,117 @@
+# SPDX-License-Identifier: MIT
+"""Apply Nix-authoritative wheel selections to an ephemeral native uv project."""
+import argparse
+import hashlib
+import json
+from pathlib import Path
+import shutil
+import tomllib
+
+from packaging.requirements import Requirement
+from packaging.tags import sys_tags
+from packaging.utils import canonicalize_name, parse_wheel_filename
+import tomli_w
+
+
+def selections(views):
+    tags = {tag: index for index, tag in enumerate(sys_tags())}
+    result = {}
+    for view in views:
+        catalog = json.loads(Path(view['catalog']).read_text())
+        if catalog['version'] != 1:
+            raise ValueError('unsupported Python projection catalog')
+        for module in catalog['modules']:
+            name = canonicalize_name(module['name'])
+            candidates = []
+            for filename in module['wheels']:
+                path = Path(view['repository']) / filename
+                wheel_name, version, build, wheel_tags = parse_wheel_filename(filename)
+                if wheel_name != name or str(version) != module['version']:
+                    raise ValueError(f'Python catalog disagrees with wheel {path}')
+                ranks = [tags[tag] for tag in wheel_tags if tag in tags]
+                if ranks:
+                    candidates.append((min(ranks), build, path))
+            if not candidates:
+                raise ValueError(f'no supplied wheel installs on this Python: {name}')
+            best = min(candidate[0] for candidate in candidates)
+            selected = max((candidate for candidate in candidates if candidate[0] == best), key=lambda item: item[1])[2]
+            previous = result.get(name)
+            if previous and (previous['version'] != module['version'] or previous['wheel'].read_bytes() != selected.read_bytes()):
+                raise ValueError(f'conflicting Nix providers for Python package {name}')
+            result[name] = {'version': module['version'], 'wheel': selected}
+    return result
+
+
+def supplied(path, roots):
+    return any(Path(path).is_relative_to(root) for root in roots)
+
+
+def prepare(project, views, old_roots, index=None, wheelhouse=None):
+    selected = selections(views)
+    pyproject = project / 'pyproject.toml'
+    model = tomllib.loads(pyproject.read_text())
+    uv = model.setdefault('tool', {}).setdefault('uv', {})
+    overrides = [value for value in uv.get('override-dependencies', [])
+                 if canonicalize_name(Requirement(value).name) not in selected]
+    overrides.extend(name + ' @ ' + module['wheel'].as_uri() for name, module in sorted(selected.items()))
+    uv['override-dependencies'] = overrides
+    pyproject.write_text(tomli_w.dumps(model))
+    lockfile = project / 'uv.lock'
+    if lockfile.exists():
+        lock = tomllib.loads(lockfile.read_text())
+        for package in lock.get('package', []):
+            name = canonicalize_name(package['name'])
+            source = package.get('source', {})
+            if name in selected and 'path' in source and supplied(source['path'], old_roots):
+                module = selected[name]
+                package['version'] = module['version']
+                package['source'] = {'path': str(module['wheel'])}
+                package['wheels'] = [{'filename': module['wheel'].name,
+                    'hash': 'sha256:' + hashlib.sha256(module['wheel'].read_bytes()).hexdigest()}]
+        def references(value):
+            if isinstance(value, list):
+                for item in value:
+                    references(item)
+            elif isinstance(value, dict):
+                name = canonicalize_name(value.get('name', ''))
+                source = value.get('source', {})
+                if name in selected and isinstance(source, dict) and 'path' in source and supplied(source['path'], old_roots):
+                    value['source'] = {'path': str(selected[name]['wheel'])}
+                    if 'version' in value:
+                        value['version'] = selected[name]['version']
+                for child in value.values():
+                    references(child)
+        references(lock)
+        manifest = lock.setdefault('manifest', {})
+        overrides = [item for item in manifest.get('overrides', [])
+                     if canonicalize_name(item['name']) not in selected]
+        overrides.extend({'name': name, 'path': str(module['wheel'])} for name, module in sorted(selected.items()))
+        manifest['overrides'] = overrides
+        lockfile.write_text(tomli_w.dumps(lock))
+    if index is not None:
+        result = json.loads(index.read_text())
+        for name, module in selected.items():
+            directory = wheelhouse / name
+            directory.mkdir(parents=True, exist_ok=True)
+            target = directory / module['wheel'].name
+            if not target.exists():
+                target.symlink_to(module['wheel'])
+            result['paths'][str(module['wheel'])] = str(directory)
+        index.write_text(json.dumps(result))
+    return selected
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--project', required=True, type=Path)
+    parser.add_argument('--views', required=True, type=Path)
+    parser.add_argument('--old-repositories', required=True, type=Path)
+    parser.add_argument('--index', type=Path)
+    parser.add_argument('--wheelhouse', type=Path)
+    args = parser.parse_args()
+    prepare(args.project, json.loads(args.views.read_text()), json.loads(args.old_repositories.read_text()),
+            args.index, args.wheelhouse)
+
+
+if __name__ == '__main__':
+    main()
