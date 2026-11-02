@@ -376,11 +376,5 @@ nix run github:nix-purifiers/uv-purifier -- lock --lockfile ../flask-packaging/u
 
 ## Credits
 
-The purifiers follow the design of
-[sbt-nix-backend](https://github.com/nix-purifiers/sbt-purifier): the build
-tool keeps planning the build, a lock run records what it needs, and Nix
-builds from the lockfile in its sandbox. The purifier idea was inspired by
-nixcloud's [cargo (libnix)](https://github.com/nixcloud/cargo). The
-downloads go through the shared
-[purifier](https://github.com/nix-purifiers/purifier) library.
-`docs/development/` describes the design and the tests.
+The purifier idea was inspired by nixcloud's
+[cargo (libnix)](https://github.com/nixcloud/cargo).
