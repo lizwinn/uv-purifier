@@ -11,34 +11,20 @@ requirements: the build backend of each workspace member, and the packages
 needed to build a dependency from its source. `uv-purifier lock` resolves
 those with uv and writes them to `uv-purifier.lock.json` beside uv.lock.
 
-## Installation
-
-Install the integration into your Nix profile once:
-
-```sh
-nix profile install 'github:nix-purifiers/uv-purifier'
-```
-
-This installs the purifier CLI. The workflow below prepares the native
-tool's cache, hook or environment; follow that activation step before using
-your usual commands. The ordinary tool itself remains your normal
-installation unless the setup explicitly supplies a toolchain.
-
-`nix shell` makes an integration available temporarily instead of installing
-it. Keep using the activation steps below where a project environment or
-prefetched cache is required.
-
 ## Quickstart
 
-Install Nix, then run the following from your existing project's root.
-The setup prepares the locked dependencies and the integration that
-uv's normal commands use:
+From the project root:
 
 ```zsh
-nix run github:nix-purifiers/uv-purifier -- lock
-nix run github:nix-purifiers/uv-purifier -- prefetch
-uv run --no-sync pytest
+nix shell 'github:nix-purifiers/uv-purifier'
+uv-purifier lock
+uv-purifier prefetch
+. .venv/bin/activate
+pytest
 ```
+
+`prefetch` creates and installs the project’s `.venv` from the locked
+dependencies. The activation command makes it available to your shell.
 
 Commit the lockfiles that the lock command writes, including the build
 tool's own lockfile when it has one. Keep using the project's usual build,
@@ -48,6 +34,9 @@ No project Nix files are needed for this workflow.
 
 Sandboxed builds of the whole project are an optional
 [next step](#building-the-project-with-nix).
+
+For persistent use, add these packages through your usual Nix configuration.
+
 
 ## Development loop
 
