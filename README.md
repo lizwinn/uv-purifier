@@ -5,15 +5,11 @@ Nix-resolved dependencies. Use the normal build and test commands in your
 working tree; building the project itself in the Nix sandbox is an
 optional next step.
 
-It follows the [purifier contract](https://github.com/nix-purifiers/purifier/blob/main/CONTRACT.md).
-
 uv.lock already pins every dependency of the project with its URL and hash,
 and the Nix library reads it directly. What uv.lock leaves out are the build
 requirements: the build backend of each workspace member, and the packages
 needed to build a dependency from its source. `uv-purifier lock` resolves
 those with uv and writes them to `uv-purifier.lock.json` beside uv.lock.
-uv-purifier meets the [purifier contract](https://github.com/nix-purifiers/purifier/blob/main/CONTRACT.md)
-that every nix-purifier meets.
 
 ## Installation
 
