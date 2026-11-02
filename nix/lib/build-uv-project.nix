@@ -323,6 +323,30 @@ let
     }) lock.direct
   );
 
+  # Retain wheels for native runtime packages available only as sdists.
+  # Their original source archives and build requirements remain locked.
+  indexWheels = listToAttrs (
+    map (distribution: {
+      name = distribution.key;
+      value = stdenvNoCC.mkDerivation {
+        pname = "${distribution.name}-runtime-wheel";
+        version = lib.removePrefix "${distribution.name}==" distribution.key;
+        src = fetch systemFiles.${distribution.sdist};
+        nativeBuildInputs = [ uv ];
+        env = uvEnv;
+        dontConfigure = true;
+        buildPhase = ''
+          runHook preBuild
+          ${uvSetup}
+          ${uvBuild "--wheel ."}
+          runHook postBuild
+        '';
+        dontInstall = true;
+        dontFixup = true;
+      };
+    }) (filter (distribution: (needs distribution).builds != [ ]) lock.distributions)
+  );
+
   # What split_requirements.py needs to swap the direct packages of an
   # exported requirements file for their wheels: each package from git or a
   # URL by its name, and each local package by its path.
@@ -422,6 +446,33 @@ let
     '') (filter (name: distributions ? ${name}) members)}
   '';
 
+  publicationSources =
+    name:
+    map (member: distributions.${member}) (
+      filter (member: distributions ? ${member}) (memberClosure name)
+    );
+  publicationRepository =
+    name:
+    runCommand "${name}-publication-wheels" { } ''
+      mkdir -p "$out"
+      ${lib.concatMapStrings (source: ''
+        for wheel in ${source}/*.whl; do
+          ln -s "$wheel" "$out/$(basename "$wheel")"
+        done
+      '') (publicationSources name)}
+    '';
+  runtimeRepository =
+    name: environment:
+    runCommand "${name}-runtime-wheels"
+      { nativeBuildInputs = [ (python3.withPackages (ps: [ ps.packaging ])) ]; }
+      ''
+        python ${./export-runtime.py} --environment ${environment} --destination "$out" \
+          ${lib.concatMapStringsSep " " (source: "--own ${source}") (publicationSources name)} \
+          ${lib.concatMapStringsSep " " (source: "--candidate ${source}") (
+            [ wheelhouse ] ++ builtins.attrValues directWheels ++ builtins.attrValues indexWheels
+          )}
+      '';
+
   packages = listToAttrs (
     map (m: {
       inherit (m) name;
@@ -439,6 +490,12 @@ let
         '';
         # The scripts of the member and of the members it depends on, by
         # name, known when Nix evaluates.
+        passthru.projections = purifier.pythonProjections {
+          repository = publicationRepository m.name;
+          producer = distributions.${m.name} or finalAttrs.finalPackage;
+          runtimeRepository = runtimeRepository m.name finalAttrs.finalPackage;
+          inherit runCommand python3;
+        };
         passthru.scripts = lib.genAttrs (lib.concatMap (name: (outputsOf membersByName.${name}).scripts) (
           filter (name: distributions ? ${name}) (memberClosure m.name)
         )) (script: "${finalAttrs.finalPackage}/bin/${script}");

@@ -137,6 +137,34 @@ in
     runs "simple" simple.packages.simple.scripts.simple
       "simple attrs=25.3.0 docopt=0.6.2 markupsafe=3.0.3 &lt;nix&gt;";
 
+  runtime-projections =
+    runCommand "uv-runtime-projection-downstreams"
+      {
+        nativeBuildInputs = [
+          pkgs.uv
+          pkgs.python3
+        ];
+      }
+      ''
+        export HOME=$TMPDIR UV_OFFLINE=1 UV_NO_INDEX=1 UV_PYTHON_DOWNLOADS=never
+        uv venv --python ${pkgs.python3.interpreter} simple-env
+        uv pip install --python simple-env/bin/python \
+          --find-links ${simple.packages.simple.projections.python} simple
+        output=$(simple-env/bin/simple)
+        test "$output" = 'simple attrs=25.3.0 docopt=0.6.2 markupsafe=3.0.3 &lt;nix&gt;'
+        uv venv --python ${pkgs.python3.interpreter} workspace-env
+        uv pip install --python workspace-env/bin/python \
+          --find-links ${workspace.packages.app.projections.python} app
+        test "$(workspace-env/bin/app)" = 'hello, nix six=1.17.0'
+        workspace-env/bin/python - <<'PYTHON'
+        from importlib.metadata import version
+        assert '+nix.' in version('app')
+        assert '+nix.' in version('greeting')
+        assert version('six') == '1.17.0'
+        PYTHON
+        touch $out
+      '';
+
   # The simple fixture built with nixpkgs' Python and its attrs among the
   # build inputs, whose setup hook puts that attrs on PYTHONPATH. The build
   # still installs the locked attrs, which the script imports with no

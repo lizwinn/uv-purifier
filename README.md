@@ -108,6 +108,15 @@ passes as `lockFile` and `uvLock`.
 uploads the `release` that Nix built, with `uv publish`; arguments after
 `--` go to `uv publish`, and `--package <member>` limits it to members.
 
+## Exporting Python dependencies
+
+Each built package exposes `projections.python`: a wheelhouse containing the
+package, its workspace dependencies and its native runtime dependencies.
+Project wheels use Nix-derived versions, with dependency metadata rewritten
+for ordinary Python installers. Unchanged third-party wheels retain their
+published versions. Dependencies available only as source archives are built
+into wheels with their locked build requirements.
+
 ## Building the project with Nix
 
 Once the native development workflow is working, you can also build and
