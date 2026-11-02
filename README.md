@@ -93,8 +93,10 @@ each package it names, and then relocks the purifier lockfile with the
 build requirements resolved anew:
 
 ```zsh
-nix run github:nix-purifiers/uv-purifier -- update            # every package
-nix run github:nix-purifiers/uv-purifier -- update requests   # only requests
+# every package
+nix run github:nix-purifiers/uv-purifier -- update
+# only requests
+nix run github:nix-purifiers/uv-purifier -- update requests
 ```
 
 A relock with `lock` resolves the build requirements as of the time the
@@ -103,8 +105,7 @@ byte for byte when nothing else changed.
 
 Every command finds both lockfiles in the project by default. For an
 external build, `--lockfile <path>` or the environment variable
-`UV_PURIFIER_LOCKFILE` names the purifier lockfile. `--tool-lockfile
-<path>` or `UV_PURIFIER_TOOL_LOCKFILE` names a uv.lock outside the
+`UV_PURIFIER_LOCKFILE` names the purifier lockfile. `--tool-lockfile <path>` or `UV_PURIFIER_TOOL_LOCKFILE` names a uv.lock outside the
 project. With a uv.lock outside the project, `lock` and `update` write
 uv.lock to that path and leave the uv.lock of the project as it is. When
 that path has no file yet, `lock` starts from the uv.lock of the project.
@@ -136,7 +137,8 @@ the builder directly:
   inputs.uv-purifier.url = "github:nix-purifiers/uv-purifier";
   inputs.nixpkgs.follows = "uv-purifier/nixpkgs";
 
-  outputs = { nixpkgs, uv-purifier, ... }:
+  outputs =
+    { nixpkgs, uv-purifier, ... }:
     let
       system = "x86_64-linux";
       pkgs = import nixpkgs {
@@ -216,15 +218,14 @@ For an ad hoc build, the builder can also be evaluated directly from the
 project root. Replace the example package name with one from your project:
 
 ```zsh
-nix build --impure --expr '
-  let
-    purifier = builtins.getFlake "github:nix-purifiers/uv-purifier";
-    pkgs = import purifier.inputs.nixpkgs {
-      system = builtins.currentSystem;
-      overlays = [ purifier.overlays.default ];
-    };
-  in
-  (pkgs.uv-purifier.buildUvProject { src = ./.; }).packages.app'
+nix build --impure --expr 'let
+  purifier = builtins.getFlake "github:nix-purifiers/uv-purifier";
+  pkgs = import purifier.inputs.nixpkgs {
+    system = builtins.currentSystem;
+    overlays = [ purifier.overlays.default ];
+  };
+in
+(pkgs.uv-purifier.buildUvProject { src = ./.; }).packages.app'
 ```
 
 This uses the purifier's pinned nixpkgs, matching the lock command above.
@@ -319,15 +320,14 @@ Then build Flask from the same directory, with the command of the
 Quickstart and `packages.flask` in place of `packages.app`:
 
 ```zsh
-nix build --impure --expr '
-  let
-    purifier = builtins.getFlake "github:nix-purifiers/uv-purifier";
-    pkgs = import purifier.inputs.nixpkgs {
-      system = builtins.currentSystem;
-      overlays = [ purifier.overlays.default ];
-    };
-  in
-  (pkgs.uv-purifier.buildUvProject { src = ./.; }).packages.flask'
+nix build --impure --expr 'let
+  purifier = builtins.getFlake "github:nix-purifiers/uv-purifier";
+  pkgs = import purifier.inputs.nixpkgs {
+    system = builtins.currentSystem;
+    overlays = [ purifier.overlays.default ];
+  };
+in
+(pkgs.uv-purifier.buildUvProject { src = ./.; }).packages.flask'
 ```
 
 A packaging flake outside the Flask repository can also build Flask,
@@ -343,7 +343,13 @@ the flake and passes it as `lockFile`:
     flake = false;
   };
 
-  outputs = { nixpkgs, uv-purifier, flask, ... }:
+  outputs =
+    {
+      nixpkgs,
+      uv-purifier,
+      flask,
+      ...
+    }:
     let
       system = "x86_64-linux";
       pkgs = import nixpkgs {
@@ -367,7 +373,8 @@ To make that lockfile, run `lock` in a checkout of the same Flask commit
 with the path of the packaging flake:
 
 ```zsh
-nix run github:nix-purifiers/uv-purifier -- lock --lockfile ../flask-packaging/uv-purifier.lock.json
+nix run github:nix-purifiers/uv-purifier -- lock --lockfile \
+  ../flask-packaging/uv-purifier.lock.json
 ```
 
 ## Credits
