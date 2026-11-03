@@ -134,6 +134,11 @@ let
 in
 {
   composition-producer = simple.packages.simple;
+  composition-producer-python312 =
+    (build {
+      src = ./fixtures/simple;
+      python = pkgs.python312;
+    }).packages.simple;
 
   simple =
     runs "simple" simple.packages.simple.scripts.simple

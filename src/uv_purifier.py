@@ -597,7 +597,7 @@ def lock(root, lockfile, upgrade=False, inputs=None, upgrade_packages=()):
             old_lock = os.path.join(root, 'uv.lock')
             model = tomllib.load(open(old_lock, 'rb')) if os.path.exists(old_lock) else {}
             effective = scratch_project(root, model, temporary)
-            bindings.prepare(Path(effective), views, old_roots)
+            bindings.prepare(Path(effective), views, old_roots, python=project_python(root))
             if upgrade:
                 arguments = ['lock']
                 if upgrade_packages:
@@ -869,6 +869,13 @@ def check_lockfile(root, path):
         )
 
 
+def project_python(root):
+    found = run_uv(['python','find','--no-python-downloads'], cwd=root)
+    if found.returncode != 0 or not found.stdout.strip():
+        raise Error('uv could not select the project Python: ' + found.stderr.strip())
+    return found.stdout.strip()
+
+
 def nix_build(root, lockfile, package=None, out_link=None):
     """Builds, with the Nix library this program was installed with, a
     member's release (its sdist and wheel), or without `package` the inputs
@@ -890,6 +897,9 @@ def nix_build(root, lockfile, package=None, out_link=None):
         "--arg", "purifier", purifier,
         "--argstr", "src", root,
     ]
+    python_version = subprocess.check_output([project_python(root), '-I', '-c',
+        'import sys;print("%d.%d" % sys.version_info[:2])'],text=True).strip()
+    args += ["--argstr", "pythonVersion", python_version]
     if os.path.abspath(lockfile) != os.path.join(root, LOCK_FILE):
         args += ["--argstr", "lockFile", os.path.abspath(lockfile)]
     if package is not None:

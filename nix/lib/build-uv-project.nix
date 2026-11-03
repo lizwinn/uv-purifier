@@ -150,7 +150,7 @@ let
         cp --no-preserve=mode ${uvLock} "$out/uv.lock"
         mkdir -p "$out/.uv-purifier-inputs"
         cp --no-preserve=mode ${directIndexBase} "$out/.uv-purifier-inputs/direct.json"
-        python ${./python_inputs.py} --project "$out" --views ${inputViews} \
+        PYTHONPATH=${purifier.projectInputsTool} python ${./python_inputs.py} --project "$out" --views ${inputViews} \
           --old-repositories ${oldRepositoryFile} \
           --index "$out/.uv-purifier-inputs/direct.json" \
           --wheelhouse "$out/.uv-purifier-inputs/wheels"

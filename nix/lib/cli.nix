@@ -17,6 +17,7 @@
   src,
   package ? null,
   lockFile ? null,
+  pythonVersion ? null,
 }:
 let
   pkgs = import nixpkgs { };
@@ -81,6 +82,12 @@ let
   project = buildUvProject (
     {
       inherit pathSources;
+      python =
+        if pythonVersion == null then
+          pkgs.python3
+        else
+          pkgs.${"python" + builtins.replaceStrings [ "." ] [ "" ] pythonVersion}
+            or (throw "uv-purifier: nixpkgs has no Python ${pythonVersion}");
       src = projectSrc;
     }
     // lib.optionalAttrs (lockFile != null) { lockFile = /. + lockFile; }
