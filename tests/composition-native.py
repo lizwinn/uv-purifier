@@ -45,6 +45,8 @@ composed-app = "composed_app:main"
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 ''')
+    subprocess.run([str(tools / 'bin/uv'), 'venv', '--python', str(tools / 'bin/python'),
+                    str(project / '.venv')], check=True)
     original = definition.read_bytes()
     reference = 'path:' + snapshot + '#checks.' + system + '.composition-producer'
     subprocess.run([str(cli), 'lock', '--project', str(project), '--input', reference], check=True)
